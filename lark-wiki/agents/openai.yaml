@@ -1,0 +1,6 @@
+interface:
+  display_name: "LarkWiki"
+  short_description: "按现行规则查询、去重、增补并回读核验飞书个人知识库的维护流程"
+  default_prompt: "使用 $lark-wiki 查询飞书知识库中与本次问题有关的原文和证据。"
+policy:
+  allow_implicit_invocation: true
