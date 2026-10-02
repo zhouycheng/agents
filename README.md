@@ -59,6 +59,7 @@
 | imagegen-frontend-mobile | 生成 iOS/Android App 界面概念图与多屏流程 |
 | imagegen-frontend-web | 为落地页每个版块单独生成设计参考图 |
 | industrial-brutalist-ui | 工业粗野主义界面，瑞士排版融合军事终端美学 |
+| ip-as-logo | 提出 IP 吉祥物方向并生成极简候选图 |
 | minimalist-ui | 极简编辑风界面，暖色单色系与扁平 bento 网格 |
 | redesign-existing-projects | 审计既有网站并按高端标准重设计，不破坏功能 |
 | stitch-design-taste | 为 Google Stitch 生成 DESIGN.md 语义设计系统 |
