@@ -17,7 +17,7 @@
 
 ## 它是什么
 
-这个仓库保存 macOS 开发工作站的**期望配置**，覆盖 Homebrew、Shell、Android / Gradle、GUI 环境和 Codex 配置。
+这个模块保存 macOS 开发工作站的**期望配置**，覆盖 Homebrew、Shell、Android / Gradle、GUI 环境和 Codex 配置。
 
 Git 负责保存可复现的配置声明与部署逻辑；当前机器的实际状态由本地 inventory 记录：
 
@@ -30,8 +30,8 @@ Git 负责保存可复现的配置声明与部署逻辑；当前机器的实际�
 ## 快速开始
 
 ```sh
-git clone https://github.com/zhouycheng/workstation-config.git ~/.workstation-config
-cd ~/.workstation-config
+git clone https://github.com/zhouycheng/agents.git ~/.agents
+cd ~/.agents/workstation
 
 bin/workstation check
 bin/workstation inventory refresh
@@ -61,7 +61,7 @@ bin/workstation verify
 | `inventory status` | 查看 inventory 的更新时间与状态摘要 |
 | `verify` | 验证已部署配置是否正确落位 |
 
-项目技能位于 `.agents/skills/`，以本仓库作为 Codex 当前项目时可以直接发现。Codex 全局规则与稳定能力导航位于 `codex/`。
+工作站技能统一位于 `../skills/`。使用前读取本模块 `AGENTS.md`，工作目录设为 `~/.agents/workstation`。Codex 全局规则与稳定能力导航位于 `../codex/`。
 
 Android / Flutter 工具升级后，使用下面的流程重新核验环境：
 
@@ -98,9 +98,9 @@ bin/workstation inventory status
 | 路径 | 用途 |
 | --- | --- |
 | `macos/manifest/` | Brewfile、能力探测目标、zsh、Android / Gradle 与 GUI 环境声明 |
-| `codex/` | 部署到 `~/.codex` 的全局规则和能力导航 |
-| `.agents/skills/` | 工作站审计、供给、Android / Flutter、Shell 项目技能 |
+| `../codex/` | 部署到 `~/.codex` 的全局规则和能力导航 |
+| `../skills/` | 工作站审计、供给、Android / Flutter、Shell 技能 |
 | `scripts/` | Brewfile 探测、声明、验证脚本与本机状态生成器 |
 | `bin/workstation` | 工作站检查、状态读取、组件部署与落位验证入口 |
 
-本仓库聚焦可复现配置与工作站状态管理。凭据、完整环境变量、Gradle 缓存和测试工程由本机环境管理；系统代理与 TUN 保持独立控制。
+本模块聚焦可复现配置与工作站状态管理。凭据、完整环境变量、Gradle 缓存和测试工程由本机环境管理；系统代理与 TUN 保持独立控制。

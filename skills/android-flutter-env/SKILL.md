@@ -5,6 +5,8 @@ description: Prepare, verify and troubleshoot native Android Studio, Android CLI
 
 # Android and Flutter environment
 
+These skills belong to the unified Agent workspace. Before running workstation commands, read `~/.agents/workstation/AGENTS.md` and use `~/.agents/workstation` as the working directory. Relative manifest and script paths below are relative to that directory. Skills live in `~/.agents/skills`; Codex navigation lives in `~/.agents/codex/environment`.
+
 Read `macos/manifest/gradle/README.md` and `distributions.json` before modifying the distribution set. Run `android_env check` after tool upgrades. Compare real Flutter, Android Studio and Android CLI template versions, original complete Wrapper URLs, `bin/all`, and SHA-256 from Gradle's official release information. Unknown versions or missing trusted checksums stop preparation. When current pins match, use `android_env check → prepare → verify`; `prepare` downloads from the mirror into the standard Wrapper cache via the official Wrapper. Shell startup never prepares distributions.
 
 Retain original `flutter create`, `android create` and Android Studio wizard flows. `gradle_mirror --check|--apply` and `flutter_new` remain compatibility tools for projects that explicitly choose rewritten URLs. Validate Maven/plugin, Wrapper, Pub/engine, SDK/NDK, emulator images and Marketplace as separate download layers. The global Gradle init script and Flutter GUI LaunchAgent are deployed via `bin/workstation apply android` and `apply gui`.

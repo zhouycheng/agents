@@ -11,6 +11,7 @@ import tempfile
 
 
 ROOT = Path(__file__).resolve().parent.parent
+CODEX = ROOT.parent / 'codex'
 HOME = Path.home()
 MANIFEST = ROOT / 'macos/manifest'
 TEST_MODE = os.environ.get('WORKSTATION_TEST_MODE') == '1'
@@ -31,14 +32,7 @@ def link(expected, path):
         return
     if path.is_symlink():
         actual = path.resolve()
-        raw = Path(os.readlink(path))
-        legacy_roots = (HOME / 'codex-config', HOME / 'workstation-config')
-        allowed = (actual == expected.resolve() or any(
-            root == candidate or root in candidate.parents
-            for root in legacy_roots
-            for candidate in (actual, raw)
-        ))
-        if not allowed:
+        if actual != expected.resolve():
             raise ValueError(f'refusing unrelated link: {path} -> {actual}')
         path.unlink()
     elif path.exists():
@@ -50,15 +44,13 @@ def link(expected, path):
     print(f'linked {path} -> {expected}')
 
 
-def write_owned(path, content, old_source=None, owned_plist_label=None, owned_prefix=None):
+def write_owned(path, content, owned_plist_label=None, owned_prefix=None):
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.is_file() and not path.is_symlink() and path.read_bytes() == content:
         print(f'OK {path}')
         return False
     if path.is_symlink():
-        if old_source is None or path.resolve() != old_source.resolve():
-            raise ValueError(f'refusing unrelated link: {path}')
-        path.unlink()
+        raise ValueError(f'refusing unrelated link: {path}')
     elif path.exists() and path.read_bytes() != content:
         if owned_plist_label is not None:
             try:
@@ -115,17 +107,15 @@ def gui_plist(kind):
 
 def apply(component):
     if component == 'codex':
-        link(ROOT / 'codex/AGENTS.md', HOME / '.codex/AGENTS.md')
-        link(ROOT / 'codex/environment', HOME / '.codex/environment')
+        link(CODEX / 'AGENTS.md', HOME / '.codex/AGENTS.md')
+        link(CODEX / 'environment', HOME / '.codex/environment')
     elif component == 'shell':
         return run('/bin/bash', MANIFEST / 'zsh/deploy.sh')
     elif component == 'android':
-        old = ROOT / 'environment/macos/androidrc'
-        write_owned(HOME / '.androidrc', androidrc(), old)
+        write_owned(HOME / '.androidrc', androidrc())
         link(MANIFEST / 'gradle/codex-android-mirrors.init.gradle',
              HOME / '.gradle/init.d/10-codex-android-mirrors.init.gradle')
         write_owned(HOME / '.gradle/gradle.properties', gradle_properties(),
-                    ROOT / 'environment/macos/manifest/gradle/gradle.properties',
                     owned_prefix=b'# Homebrew toolchains:')
     elif component == 'gui':
         agent_dir = HOME / 'Library/LaunchAgents'
@@ -156,8 +146,8 @@ def apply(component):
 
 def verify():
     expected = {
-        HOME / '.codex/AGENTS.md': ROOT / 'codex/AGENTS.md',
-        HOME / '.codex/environment': ROOT / 'codex/environment',
+        HOME / '.codex/AGENTS.md': CODEX / 'AGENTS.md',
+        HOME / '.codex/environment': CODEX / 'environment',
         HOME / '.gradle/init.d/10-codex-android-mirrors.init.gradle': MANIFEST / 'gradle/codex-android-mirrors.init.gradle',
     }
     issues = []

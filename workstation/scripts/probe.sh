@@ -105,7 +105,7 @@ if [ -d "$STATE_DIR" ]; then MODE="增量对账"; STATE_MARK="存在"; else MODE
 
 {
 hr
-printf '%s\n' "workstation-config · 对账报告（只读）"
+printf '%s\n' "agents/workstation · 对账报告（只读）"
 printf '生成时间: %s\n' "$NOW"
 hr
 } > "$REPORT"

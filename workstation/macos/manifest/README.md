@@ -14,7 +14,7 @@
 | `zsh/zshrc.snippet` | `~/.zshrc` 补全块的唯一真相源 | **人** |
 | `zsh/deploy.sh` | 把 snippet 对齐进 `~/.zshrc`、把 assets 落位 | 脚本 |
 
-本目录是环境清单的唯一维护位置：`~/.workstation-config/macos/manifest/`。四个项目技能在仓库根部 `.agents/skills/`，共用此处声明和根部 `scripts/`。
+本目录是环境清单的唯一维护位置：`~/.agents/workstation/macos/manifest/`。四个工作站技能统一位于 `~/.agents/skills/`，共用此处声明和 `workstation/scripts/`。
 
 Flutter 的 `PUB_HOSTED_URL` 与 `FLUTTER_STORAGE_BASE_URL` 同时用于终端和从 Finder/Dock 启动的 Android Studio。LaunchAgent 在每次登录时为新启动的 GUI 进程设置 CFUG 默认源，并将 Aliyun、Huawei 与 CFUG 镜像域名放进 `NO_PROXY`，避免配置的本机代理不可用时镜像流量仍被送进代理；Gradle init script 也为这些域名加 Java `nonProxyHosts`。`flutter_source mirror|official` 会同步当前终端与 launchd 的后续进程环境。已经打开的 IDE 不会自动改变环境，切源后需重启 IDE。发布 Dart 包前执行 `flutter_source official` 并重新启动使用 Flutter 的 GUI 应用，避免把发布请求送到镜像。
 
@@ -77,7 +77,7 @@ brew "zoxide"                  # 智能 cd
 
 ```bash
 ../scripts/probe.sh          # 确认没有意外差异
-git -C ../.. diff -- macos/manifest/  # 复核
+git -C ../../.. diff -- workstation/macos/manifest/  # 复核
 ```
 
 提交由你决定，脚本不会自动 commit。

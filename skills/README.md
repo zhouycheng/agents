@@ -1,6 +1,6 @@
 **skills 是一套安装在 `~/.agents/skills` 的 Agent Skills 集合，覆盖文档处理、浏览器自动化、网络检索、前端设计与视觉生成、工程协作和 Dart/Flutter 开发，供 Agent 宿主按需调用。**
 
-[技能清单](#技能清单) · [安装](#安装) · [问题反馈](https://github.com/zhouycheng/skills/issues)
+[技能清单](#技能清单) · [安装](#安装) · [问题反馈](https://github.com/zhouycheng/agents/issues)
 
 ## 技能清单
 
@@ -28,7 +28,11 @@
 | pptx | 创建、读取、编辑 PowerPoint 演示文稿 |
 | pr-walkthrough | 生成可交互的 Pull Request 系统、数据流和依赖关系导览 |
 | prompt-optimizer-skill | 把草稿提示词改写成可验收的标准结构提示词 |
-| workstation-lookup | 从任何项目快速读取本机环境清单、判断时效并定向核验；配置维护由 workstation-config 项目技能负责 |
+| workstation-lookup | 从任何项目快速读取本机环境清单、判断时效并定向核验；配置维护由统一工作站技能负责 |
+| workstation-audit | 只读核对工作站配置、能力与本机清单 |
+| workstation-provision | 按明确的配置或安装决定部署工作站组件 |
+| android-flutter-env | 核验和准备 Android / Flutter、Gradle Wrapper 环境 |
+| macos-shell-env | 部署和排查工作站的受管 zsh 环境 |
 | readout | 将调查结果整理为可长期阅读和分享的 HTML 文档 |
 | react-best-practices | React/Next.js 性能优化规范（Vercel 工程实践） |
 | rename-all-threads | 批量整理 Codex 会话标题，确认后统一重命名 |
@@ -100,8 +104,10 @@
 
 ## 安装
 
+本目录是统一 agents 仓库的技能模块；Git 根目录为 `~/.agents`，工作站配置和 Codex 全局规则分别位于同级 `workstation/`、`codex/`。
+
 ```bash
-git clone https://github.com/zhouycheng/skills.git ~/.agents/skills
+git clone https://github.com/zhouycheng/agents.git ~/.agents
 ```
 
 宿主在下次会话启动时会扫描该目录并加载全部技能。

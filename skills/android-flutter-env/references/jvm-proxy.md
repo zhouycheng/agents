@@ -1,6 +1,6 @@
 # Android / Flutter 下载链与 JVM 代理诊断
 
-本参考页先说明 **2026-09-25 这台 Mac 的当前配置**，再保留 2026-09-24 的历史代理/插件故障。版本、IDE 菜单、网络客户端和下载端点都可能改变；先看 `~/.workstation-config/macos/manifest/gradle/README.md` 与 `distributions.json`，再检查实际进程，勿照旧案例预设全局 JVM 代理。
+本参考页先说明 **2026-09-25 这台 Mac 的当前配置**，再保留 2026-09-24 的历史代理/插件故障。版本、IDE 菜单、网络客户端和下载端点都可能改变；先看 `~/.agents/workstation/macos/manifest/gradle/README.md` 与 `distributions.json`，再检查实际进程，勿照旧案例预设全局 JVM 代理。
 
 ## 当前默认方案：按下载阶段定位
 

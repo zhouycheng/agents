@@ -5,6 +5,8 @@ description: Reconcile the workstation Brewfile and deploy selected managed comp
 
 # Workstation provision
 
+These skills belong to the unified Agent workspace. Before running workstation commands, read `~/.agents/workstation/AGENTS.md` and use `~/.agents/workstation` as the working directory. Relative manifest and script paths below are relative to that directory. Skills live in `~/.agents/skills`; Codex navigation lives in `~/.agents/codex/environment`.
+
 Run `bin/workstation check` before suggesting changes. Present missing declared packages and directly installed undeclared packages separately; distinguish dependencies and unknown probe results. The desired package list is `macos/manifest/Brewfile`. Never overwrite it with `brew bundle dump`; the snapshot at `~/.local/state/env/inventory.json` is observed state only.
 
 Agree on the concrete package or configuration actions with the user before each installation or live configuration change. Do not run `brew bundle install` for the entire file. After each action, verify the package or component, then run `bin/workstation inventory refresh`. `scripts/declare.sh` edits package intent; removing a declaration does not uninstall a package. `bin/workstation apply codex|shell|android|gui` deploys only the named component, followed by `bin/workstation verify`.
