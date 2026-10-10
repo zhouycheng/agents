@@ -16,7 +16,7 @@ android_env verify
 
 `check` exits 1 for missing distributions and 2 for configuration/tool drift. Unknown tool/template identities block preparation; they are not silently marked supported. After upgrades, inspect the installed Flutter Gradle template, Android CLI template archive and actual IDE wizard output, obtain SHA-256 values from Gradle's official release endpoint, and update the single manifest before repeating check → prepare → verify. If the official endpoint is unavailable, only previously verified pinned values may be reused. Do not accept mirror-only checksums for new versions.
 
-Ordinary terminal startup never downloads distributions. Each new interactive terminal still defaults to `proxy on`, as requested. `proxy off` changes only that terminal's environment; system proxy and TUN remain separate controls. `proxy status` reports these layers separately and does not interpret mirror bypass patterns as a wildcard for every host.
+Ordinary terminal startup loads the configured environment without preparing distributions. New interactive terminals default to `proxy on`. `proxy off` changes only that terminal's environment; system proxy and TUN remain separate controls. `proxy status` reports these layers separately, and mirror bypass patterns match only their named hosts.
 
 ## Distribution preparation
 
@@ -53,9 +53,9 @@ The init script detects Android/Flutter builds, including the Flutter Gradle inc
 
 Gradle uses Homebrew JDK 21. The Android CLI template additionally requires a JDK 17 compilation toolchain; managed user `gradle.properties` points to both Homebrew installations to avoid automatic toolchain downloads. Other JVM options remain separate from managed proxy options.
 
-The managed LaunchAgent supplies Flutter mirror variables to newly started GUI apps. Restart IDE after a source change. Android Studio HTTP Proxy is set to No Proxy. JetBrains also reads a login shell on startup. The managed zsh block recognizes `INTELLIJ_ENVIRONMENT_READER` and supplies direct-connect JVM options for that reader; real new terminals retain proxy-on defaults. Finder launch and the Flutter daemon were checked to have the mirror variables and no HTTP_PROXY/HTTPS_PROXY. Inspect actual subprocesses during acceptance rather than relying solely on launchctl values.
+The managed LaunchAgent supplies Flutter mirror variables to newly started GUI apps. Restart IDE after a source change. JetBrains also reads a login shell on startup. The managed zsh block recognizes `INTELLIJ_ENVIRONMENT_READER` and supplies direct-connect JVM options for that reader; real new terminals retain proxy-on defaults. Verify the IDE's current HTTP Proxy setting and actual Flutter/Gradle subprocess environment during acceptance; launchctl values alone do not prove what a running process received.
 
-SDK platforms, build tools, NDK, emulator images and Marketplace plugins are separate from Maven/Pub mirrors. Current installed components include SDK 36 and 37.0, build-tools 36.0.0, NDK 28.2.13676358, CMake 3.22.1 and a Medium Phone API 37 image. Their presence is a precondition, not evidence that all future SDK downloads work without a proxy.
+SDK platforms, build tools, NDK, emulator images and Marketplace plugins are separate from Maven/Pub mirrors. Check their actual installed versions and readiness against the project's requirements. Existing components provide evidence about that local environment; cold downloads require their own checks.
 
 ## Acceptance status and operation boundary
 
@@ -71,9 +71,7 @@ python3 macos/manifest/gradle/test-wrapper.py
 python3 macos/manifest/gradle/test-mirror.py
 ```
 
-**Before disabling any proxy or TUN for the final acceptance, stop and notify the user; wait for their authorization.** Do not start a background script that toggles network settings. Until that checkpoint, keep the current system network settings unchanged.
-
-The temporary projects, isolated Gradle/Pub caches, logs, test apps and the former `test_demo` project were removed at the user's request on 2026-09-25. Shared standard caches and SDK components remain for normal development. No commit or push is part of this work.
+Proxy application modes and switches are managed by the user. For acceptance requiring system proxy and TUN to be off, provide manual steps, wait for the user to establish that state, and record it alongside cache conditions and target processes. Agents do not toggle these settings.
 
 ## References
 
