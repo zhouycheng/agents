@@ -49,7 +49,7 @@ Android SDK 的日常包管理使用 `android sdk`；保留 `sdkmanager` 仅用�
 
 `flutter doctor -v` 已确认 Flutter/Dart、Android SDK、Homebrew JDK 21、Android 许可证、代理和网络资源可用。唯一报告项是 Xcode 无法枚举已安装的 Simulator runtimes；这与当前不安装 iOS 模拟器的决定一致。
 
-2026-09-24 用新建的 Android Studio Java、Kotlin 模板和 Android-only Flutter 模板验证了 Android 开发闭环：Gradle 镜像冷下载/构建通过；Java 与 Kotlin 项目在 Android Studio 中运行成功，清理 build 后关闭、重开并重新运行成功；Flutter 项目在 Android Studio 中完成 Pub Get、运行成功，执行 `flutter clean` 后关闭、重开、Pub Get 并重新运行成功。三类应用都安装到 Medium Phone API 37 模拟器。本次 Gradle 冷构建移除了 shell 代理变量并禁用了 Java system-proxy 选择；按用户要求没有关闭 macOS 系统代理或 Clash TUN，因此不能据此保证关闭 TUN 后也能访问镜像。具体镜像、校验和与操作边界见 `~/workstation-config/macos/manifest/gradle/README.md`。
+2026-09-24 用新建的 Android Studio Java、Kotlin 模板和 Android-only Flutter 模板验证了 Android 开发闭环：Gradle 镜像冷下载/构建通过；Java 与 Kotlin 项目在 Android Studio 中运行成功，清理 build 后关闭、重开并重新运行成功；Flutter 项目在 Android Studio 中完成 Pub Get、运行成功，执行 `flutter clean` 后关闭、重开、Pub Get 并重新运行成功。三类应用都安装到 Medium Phone API 37 模拟器。本次 Gradle 冷构建移除了 shell 代理变量并禁用了 Java system-proxy 选择；按用户要求没有关闭 macOS 系统代理或 Clash TUN，因此不能据此保证关闭 TUN 后也能访问镜像。具体镜像、校验和与操作边界见 `~/.workstation-config/macos/manifest/gradle/README.md`。
 
 环境探测还发现 `/opt/homebrew/share` 对组可写，zsh 补全探测会告警。受管配置带 `compinit -i -C` 以免 shell 启动阻塞；按本机权限边界，由用户本人执行 `chmod go-w /opt/homebrew/share` 后再运行 `probe.sh --brief` 复核。
 
@@ -84,7 +84,7 @@ MCP 显示为已加载只说明配置会被 Codex 读取。真正调用前还要
 
 - 终端为 Ghostty；`~/.zshrc` 加载 uv、cargo、starship、zoxide，提示符带时间戳，`history -i` 可查历史时间。
 - `zoxide` 已初始化，`z 关键词` 智能跳转可用。
-- `~/.codex/AGENTS.md` 与本 environment 目录软链自 `~/workstation-config` 仓库，修改清单后需提交到该仓库保持同步。
+- `~/.codex/AGENTS.md` 与本 environment 目录软链自 `~/.workstation-config` 仓库，修改清单后需提交到该仓库保持同步。
 
 项目自己的运行时、包管理、构建、测试和格式规则优先。每次调用会改写文件、外部系统或账号数据的工具前，都要重新确认作用域和当前状态。
 

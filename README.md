@@ -30,8 +30,8 @@ Git 负责保存可复现的配置声明与部署逻辑；当前机器的实际�
 ## 快速开始
 
 ```sh
-git clone https://github.com/zhouycheng/workstation-config.git ~/workstation-config
-cd ~/workstation-config
+git clone https://github.com/zhouycheng/workstation-config.git ~/.workstation-config
+cd ~/.workstation-config
 
 bin/workstation check
 bin/workstation inventory refresh

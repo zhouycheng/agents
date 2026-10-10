@@ -18,12 +18,12 @@ flutter_source() {
     mirror)
       export PUB_HOSTED_URL="$DEV_FLUTTER_PUB_MIRROR"
       export FLUTTER_STORAGE_BASE_URL="$DEV_FLUTTER_STORAGE_MIRROR"
-      /bin/sh "$HOME/workstation-config/macos/manifest/launchagents/set-flutter-mirror-env.sh" mirror
-      print -r -- "Flutter 网络源：CFUG 镜像（$PUB_HOSTED_URL；$FLUTTER_STORAGE_BASE_URL）"
+      /bin/sh "$HOME/.workstation-config/macos/manifest/launchagents/set-flutter-mirror-env.sh" mirror
+      [[ "${2:-}" == "-q" ]] || print -r -- "Flutter 网络源：CFUG 镜像（$PUB_HOSTED_URL；$FLUTTER_STORAGE_BASE_URL）"
       ;;
     official)
       unset PUB_HOSTED_URL FLUTTER_STORAGE_BASE_URL
-      /bin/sh "$HOME/workstation-config/macos/manifest/launchagents/set-flutter-mirror-env.sh" official
+      /bin/sh "$HOME/.workstation-config/macos/manifest/launchagents/set-flutter-mirror-env.sh" official
       print -r -- "Flutter 网络源：官方默认源；新启动的 GUI 应用也会使用官方源（已打开的应用需重启）"
       ;;
     status)
@@ -47,12 +47,12 @@ flutter_source() {
 }
 
 android_env() {
-  python3 "$HOME/workstation-config/macos/manifest/gradle/android-env.py" "$@"
+  python3 "$HOME/.workstation-config/macos/manifest/gradle/android-env.py" "$@"
 }
 
 # 把新项目的 Wrapper 切到已校验的 Gradle 镜像（先 --check，再 --apply）。
 gradle_mirror() {
-  /bin/sh "$HOME/workstation-config/macos/manifest/gradle/use-mirrors.sh" "$@"
+  /bin/sh "$HOME/.workstation-config/macos/manifest/gradle/use-mirrors.sh" "$@"
 }
 
 # 先生成 Flutter 工程但跳过 pub get，修正 Android Wrapper 后再解析 Dart 依赖。
@@ -195,7 +195,8 @@ proxy() {
 }
 
 # 按用户要求，每个新开的交互式终端默认启用代理。
-flutter_source mirror
+# 启动时静默设置镜像（-q）；需要查看状态时用 flutter_source status。
+flutter_source mirror -q
 # JetBrains 启动时读取登录 shell 环境不是真正的新终端。
 # IDE 构建采用直连；用户打开的普通/IDE 终端仍默认开启代理。
 if [[ -n "${INTELLIJ_ENVIRONMENT_READER:-}" ]]; then

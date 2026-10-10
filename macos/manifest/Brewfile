@@ -50,6 +50,5 @@ brew "docker-compose"
 
 # ==== 应用 ====
 cask "font-meslo-lg-nerd-font"
-cask "freecad"
 cask "ghostty"
 cask "maccy"

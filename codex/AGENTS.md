@@ -137,4 +137,4 @@ Commit、push、创建 PR、merge、tag、release、deploy 以及其他会改变
 
 ## 工作站状态入口
 
-在这台机器上，期望配置由 `~/workstation-config/macos/manifest/` 管理；本机实际状态由 `~/workstation-config/bin/workstation inventory refresh` 写入 `~/.local/state/env/inventory.json`。需要使用开发能力时先看 `~/.codex/environment/INDEX.md` 和清单的 `generated_at`、`config_digest`、各分区 `status`。超过 12 小时、配置摘要变化、分区为 `unknown` 或即将进行依赖特定能力的操作时，定向核验，不凭历史快照断言当前可用。部署和安装遵循工作站项目技能，清单不会替代项目内的验证。
+在这台机器上，期望配置由 `~/.workstation-config/macos/manifest/` 管理；本机实际状态由 `~/.workstation-config/bin/workstation inventory refresh` 写入 `~/.local/state/env/inventory.json`。需要使用开发能力时先看 `~/.codex/environment/INDEX.md` 和清单的 `generated_at`、`config_digest`、各分区 `status`。超过 12 小时、配置摘要变化、分区为 `unknown` 或即将进行依赖特定能力的操作时，定向核验，不凭历史快照断言当前可用。部署和安装遵循工作站项目技能，清单不会替代项目内的验证。

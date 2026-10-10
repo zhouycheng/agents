@@ -31,10 +31,13 @@ def link(expected, path):
         return
     if path.is_symlink():
         actual = path.resolve()
-        old = HOME / 'codex-config'
         raw = Path(os.readlink(path))
-        allowed = (actual == expected.resolve() or actual == old or old in actual.parents
-                   or raw == old or old in raw.parents)
+        legacy_roots = (HOME / 'codex-config', HOME / 'workstation-config')
+        allowed = (actual == expected.resolve() or any(
+            root == candidate or root in candidate.parents
+            for root in legacy_roots
+            for candidate in (actual, raw)
+        ))
         if not allowed:
             raise ValueError(f'refusing unrelated link: {path} -> {actual}')
         path.unlink()
