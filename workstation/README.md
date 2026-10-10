@@ -1,4 +1,4 @@
-<h1 align="center">Workstation Config</h1>
+<h1 align="center">Workstation</h1>
 
 <p align="center"><strong>用于检查、部署和持续维护 macOS 开发工作站的期望配置。</strong></p>
 
@@ -11,8 +11,7 @@
 <p align="center">
   <a href="#快速开始">快速开始</a> ·
   <a href="#工作机制">工作机制</a> ·
-  <a href="#定期检查">定期检查</a> ·
-  <a href="https://github.com/zhouycheng/workstation-config/wiki">Wiki</a>
+  <a href="#定期检查">定期检查</a>
 </p>
 
 ## 它是什么
