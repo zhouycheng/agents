@@ -14,7 +14,7 @@ Resolve conflicts without opening full files unless the compact view is insuffic
 1. Start with a summary.
 
 ```bash
-python3 .agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py
+python3 ~/.agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py
 ```
 
 Use the summary to identify which files are unresolved, which index stages exist, and how many text hunks each file contains.
@@ -22,7 +22,7 @@ Use the summary to identify which files are unresolved, which index stages exist
 2. Drill into one file.
 
 ```bash
-python3 .agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py --file path/to/file
+python3 ~/.agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py --file path/to/file
 ```
 
 Prefer this over reading the whole file. The script prints only nearby context, the `ours` / `base` / `theirs` sections for each hunk, and a compact unified diff between `ours` and `theirs`.
@@ -36,7 +36,7 @@ Prefer this over reading the whole file. The script prints only nearby context, 
 4. Re-check unresolved files.
 
 ```bash
-python3 .agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py
+python3 ~/.agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py
 git diff --name-only --diff-filter=U
 ```
 
@@ -52,31 +52,31 @@ git diff --name-only --diff-filter=U
 ### Summary only
 
 ```bash
-python3 .agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py
+python3 ~/.agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py
 ```
 
 ### Detailed view for one file
 
 ```bash
-python3 .agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py --file path/to/file
+python3 ~/.agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py --file path/to/file
 ```
 
 ### Detailed view for all conflicted files
 
 ```bash
-python3 .agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py --all
+python3 ~/.agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py --all
 ```
 
 ### JSON output
 
 ```bash
-python3 .agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py --file path/to/file --json
+python3 ~/.agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py --file path/to/file --json
 ```
 
 ### Tune output size
 
 ```bash
-python3 .agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py \
+python3 ~/.agents/skills/resolve-merge-conflicts/scripts/extract_conflict_context.py \
   --file path/to/file \
   --context 3 \
   --max-lines 60

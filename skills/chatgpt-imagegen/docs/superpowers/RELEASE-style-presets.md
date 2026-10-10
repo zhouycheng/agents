@@ -33,7 +33,7 @@ chatgpt-imagegen "a settings icon"      # → uses brand automatically
 
 Resolution order per run: `--no-style` > `--style NAME` > active default > none.
 
-Docs: see the **Styles** section in the [README](../../README.md#styles) · [中文 README](../../README.zh-CN.md#风格).
+Current docs: [Styles & assets](../../SKILL.md#styles--assets) · [Community styles](../../README.md#community-styles) · [社区风格](../../README.zh-CN.md#社区风格).
 
 ---
 
@@ -64,4 +64,4 @@ chatgpt-imagegen "a settings icon"      # → 自动用 brand
 
 每次出图的解析顺序:`--no-style` > `--style NAME` > active 默认 > 不套。
 
-文档:见 [README](../../README.md#styles) · [中文 README](../../README.zh-CN.md#风格) 的**风格**小节。
+当前文档:见 [Styles & assets](../../SKILL.md#styles--assets) · [Community styles](../../README.md#community-styles) · [社区风格](../../README.zh-CN.md#社区风格)。

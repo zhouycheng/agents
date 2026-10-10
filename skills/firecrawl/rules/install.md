@@ -1,91 +1,53 @@
 ---
 name: firecrawl-cli-installation
-description: |
-  Install the official Firecrawl CLI and handle authentication.
-  Package: https://www.npmjs.com/package/firecrawl-cli
-  Source: https://github.com/firecrawl/cli
-  Docs: https://docs.firecrawl.dev/sdks/cli
+description: Locate, install and authenticate the official Firecrawl CLI using the workstation's package and skill maintenance workflow.
 ---
 
-# Firecrawl CLI Installation
+# Firecrawl CLI setup
 
-## Quick Setup (Recommended)
+## Locate and verify
 
-```bash
-npx -y firecrawl-cli@latest init -y --browser
-```
-
-This installs `firecrawl-cli` globally, authenticates via browser, and installs core, build, and workflow skills.
-
-This setup is safe to re-run when the CLI is missing, stale, or only partially configured.
-
-If `firecrawl` is already installed and you want to update it first:
-
-```bash
-npm update -g firecrawl-cli
-```
-
-Skills are installed globally across all detected coding editors by default.
-
-To install skills manually:
-
-```bash
-firecrawl setup skills
-firecrawl setup workflows
-```
-
-## Manual Install
-
-```bash
-npm install -g firecrawl-cli@latest
-```
-
-## Verify
-
-First check status:
-
-```bash
+```sh
+command -v firecrawl
+firecrawl --help
 firecrawl --status
 ```
 
-`--status` shows auth state, concurrency (max parallel jobs — run parallel operations up to that limit), and remaining API credits.
+Help verifies the installed command surface; status checks authentication and account limits. A task-authorized small source request verifies the service and file output:
 
-Then run one small real request to prove install, auth, and output all work:
-
-```bash
+```sh
 mkdir -p .firecrawl
 firecrawl scrape "https://firecrawl.dev" -o .firecrawl/install-check.md
 ```
 
-The install is healthy when both commands succeed.
+Inspect the output before reporting the service as usable.
+
+## Installation and updates
+
+The npm package is `firecrawl-cli`. On this workstation, first inspect the existing package and [workstation package workflow](../../workstation-provision/SKILL.md). Installation and upgrades follow the user's explicit decision and the Brewfile declaration.
+
+```sh
+npm install -g firecrawl-cli
+```
+
+If an installed command is missing from PATH, inspect the npm global prefix and executable location before reinstalling.
+
+`firecrawl init` and `firecrawl setup` can also install integrations and skills across detected hosts. Inspect their help and intended write scope before use. This repository maintains the self-managed Firecrawl skill in `~/.agents/skills/firecrawl/`; review upstream documentation changes here, then use the repository's [host synchronization workflow](../../README.md#宿主同步).
 
 ## Authentication
 
-Authenticate using the built-in login flow:
+Use the CLI's supported authentication flow after reading `firecrawl login --help`:
 
-```bash
+```sh
 firecrawl login --browser
 ```
 
-This opens the browser for OAuth authentication. Credentials are stored securely by the CLI.
+Credentials stay in the CLI's authentication storage. Account and key entry use the tool's supported secure mechanism.
 
-### Auth and credit errors are terminal
+An unauthorized or insufficient-credit result is terminal for that request. Check `firecrawl --status` once, preserve the diagnostic and report the blocker. Endpoint access without an account depends on the installed version and service; verify actual behavior before relying on it.
 
-An `Unauthorized: Invalid token` or insufficient-credits error is terminal for that call: verify config once with `firecrawl --status`, then report the blocking reason and stop. Retrying the same call yields the same error.
+## Upstream references
 
-### If authentication fails
-
-Ask the user how they'd like to authenticate:
-
-1. **Login with browser (Recommended)** - Run `firecrawl login --browser`
-2. **Enter API key manually** - Run `firecrawl login --api-key "<key>"` with a key from firecrawl.dev
-
-If you cannot obtain a key and the user cannot sign up, search, scrape, and interact still work without an API key on the keyless free tier (rate-limited). Commands that need an account — `crawl`, `map`, `download`, `agent`, `monitor`, `credit-usage`, and the feedback commands — prompt an interactive login when no credentials are set. Browser login or an API key remains preferred for the best results. See [agent onboarding](https://www.firecrawl.dev/agent-onboarding/SKILL.md) for the full set of onboarding paths.
-
-### Command not found
-
-If `firecrawl` is not found after installation:
-
-1. Ensure npm global bin is in PATH
-2. Try: `npx firecrawl-cli@latest --version`
-3. Reinstall: `npm install -g firecrawl-cli@latest`
+- [CLI source](https://github.com/firecrawl/cli)
+- [CLI package](https://www.npmjs.com/package/firecrawl-cli)
+- [Official CLI documentation](https://docs.firecrawl.dev/sdks/cli)

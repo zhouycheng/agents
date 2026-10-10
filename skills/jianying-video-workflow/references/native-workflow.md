@@ -10,7 +10,7 @@
 
 - 当前 app 默认位置如上，可通过 `JIANYING_APP` 指向实际安装包。核实 Info.plist；不要从陌生位置下载/替换原生模块。
 - 当前默认草稿根目录是 `~/Movies/JianyingPro/JianyingPro Drafts`，以新工程界面“保存位置”为准。旧工具的 `User Data/Projects/com.lveditor.draft` 不一定有效。
-- 本次 VectCutAPI 位于 `/Users/leftzhou/Documents/Codex/2026-09-12/d/work/VectCutAPI`，只是发现线索，不是 skill 依赖的固定位置；后续先检查它是否存在或发现当前安装位置。参考上游 `https://github.com/sun-guannan/VectCutAPI`，本机接口签名优先。
+- 从当前项目或已安装服务定位 VectCutAPI，核对本机接口签名。上游入口为 `https://github.com/sun-guannan/VectCutAPI`；设备专属路径记录在本机能力补充文件。
 - 使用工具能力做 UI 操作；通常 Cmd+W 保存关闭工程，Cmd+Q 退出应用。确认主进程确实退出。不要强制终止有未保存工作的应用。
 
 ## 可重复步骤
@@ -21,8 +21,8 @@
 4. 使用下面的脚本，target 指向刚新建的专用工程。它备份原工程、转换快照、继承当前 ID/平台/版本、写入主时间线及其镜像、更新时长并读回校验。脚本拒绝仍在运行的剪映及已有非空工程，避免误覆盖。
 
 ```bash
-node /Users/leftzhou/.agents/skills/jianying-video-workflow/scripts/native-draft.cjs inspect '/absolute/project'
-node /Users/leftzhou/.agents/skills/jianying-video-workflow/scripts/native-draft.cjs apply '/absolute/vectcut/draft_content.json' '/absolute/new-blank-project'
+node ~/.agents/skills/jianying-video-workflow/scripts/native-draft.cjs inspect '/absolute/project'
+node ~/.agents/skills/jianying-video-workflow/scripts/native-draft.cjs apply '/absolute/vectcut/draft_content.json' '/absolute/new-blank-project'
 ```
 
 升级后可先创建隔离测试目录，再运行 `native-draft.cjs roundtrip '/absolute/test-directory'`。它写入独立测试文件、原生读取并比较内容；测试成功仅证明该版本的加密读写可用。`self-test` 校验时间范围与缺失媒体保护。`apply` 出错会保留完整备份并退出，不能在未检查目标状态时盲目重试。

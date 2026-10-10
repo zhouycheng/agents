@@ -4,7 +4,7 @@ A read-only interview skill for pressure-testing ideas, plans, product decisions
 
 Grill Me asks exactly one consequential question at a time, recommends a position with its main trade-off, tracks facts and assumptions, reopens contradictory decisions, stress-tests failure modes, and converges on a copyable decision brief.
 
-> 中文简介：这是一个用于严谨追问与压力测试的只读 Skill。它不会替你实施方案，而是通过一次一个关键问题，将模糊想法收敛为可执行的决策简报。
+> 中文简介：通过逐题追问、事实核验和压力测试，将想法收敛为可执行的决策简报。
 
 ## Core behavior
 
@@ -21,29 +21,30 @@ The canonical portable skill is [`SKILL.md`](./SKILL.md). The Claude Code varian
 
 ### Codex and Agent Skills-compatible clients
 
-Install for the current user:
+This skill is maintained within the Agent workspace at `~/.agents/skills/grill-me`.
+For installed hosts, use the repository's [synchronization workflow](../README.md#宿主同步):
 
 ```bash
-git clone https://github.com/liq22/grill-me.git "$HOME/.agents/skills/grill-me"
+python3 ~/.agents/skills/scripts/sync.py
 ```
 
-Or copy the repository root into a project-local skill directory:
+For a project-local copy:
 
 ```bash
 mkdir -p "$REPO_ROOT/.agents/skills/grill-me"
-cp SKILL.md "$REPO_ROOT/.agents/skills/grill-me/SKILL.md"
-cp -R evals "$REPO_ROOT/.agents/skills/grill-me/evals"
+cp ~/.agents/skills/grill-me/SKILL.md "$REPO_ROOT/.agents/skills/grill-me/SKILL.md"
+cp -R ~/.agents/skills/grill-me/evals "$REPO_ROOT/.agents/skills/grill-me/evals"
 ```
 
 Then explicitly select or mention the `grill-me` skill with the idea or decision to examine.
 
 ### Claude Code
 
-```bash
-git clone https://github.com/liq22/grill-me.git /tmp/grill-me
-mkdir -p "$HOME/.claude/skills/grill-me"
-cp -R /tmp/grill-me/claude-code/. "$HOME/.claude/skills/grill-me/"
-```
+The canonical skill can be linked through the same synchronization workflow.
+The [Claude Code variant](claude-code/SKILL.md) provides explicit command metadata;
+if that variant is needed, install it into a separate host-owned skill directory
+after inspecting existing files and links. Preserve the managed canonical source
+when choosing the destination.
 
 Invoke it explicitly:
 
@@ -82,7 +83,7 @@ Final approval closes the interview. It never authorizes implementation; impleme
 ## Validate
 
 ```bash
-python3 scripts/validate.py
+python3 ~/.agents/skills/grill-me/scripts/validate.py
 ```
 
 The validator checks frontmatter invariants, version consistency, identical interview bodies across variants, valid evaluation schemas, unique evaluation IDs, and synchronized evaluation data.

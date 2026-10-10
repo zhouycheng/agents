@@ -54,7 +54,7 @@ Avoid vague descriptions like "Helps with code" or "Does development tasks". For
 
 ### Skill Structure
 
-Typical sections in Warp skills:
+Typical sections in repository skills:
 
 1. **Title and brief summary** – Clear title and a concise overview of the skill's purpose and primary use cases. Link to sections, reference files or related skills if useful
 2. **Overview** - Context about the skill's purpose (optional but common), extends the summary with more details and context
@@ -100,8 +100,8 @@ Keep only essential workflow and procedural instructions in SKILL.md. Move detai
 
 For reference on structure and style:
 
-- `.agents/skills/add-feature-flag/SKILL.md` - Multi-step workflow with clear sequential steps
-- `.agents/skills/remove-feature-flag/SKILL.md` - Cleanup workflow with search commands
+- [resolve-merge-conflicts](../resolve-merge-conflicts/SKILL.md) - Sequential workflow with reusable script commands
+- [workstation-provision](../workstation-provision/SKILL.md) - A focused workflow with detailed format guidance in a reference file
 
 ## Best Practices
 

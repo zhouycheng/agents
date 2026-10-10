@@ -214,9 +214,9 @@ Required content behavior:
 - Use Brandalf-aligned Warp styling: dark `#121212` surfaces, off-white text, Matter/Matter Mono typography, pink active accents, and graph colors from the brand palette.
 Use helper output:
 ```bash
-python3 .agents/skills/pr-walkthrough/scripts/d3_canvas_runtime.py --css
-python3 .agents/skills/pr-walkthrough/scripts/d3_canvas_runtime.py --runtime
-python3 .agents/skills/pr-walkthrough/scripts/d3_canvas_runtime.py --template --data graph.json > .warp/pr-walkthrough/index.html
+python3 ~/.agents/skills/pr-walkthrough/scripts/d3_canvas_runtime.py --css
+python3 ~/.agents/skills/pr-walkthrough/scripts/d3_canvas_runtime.py --runtime
+python3 ~/.agents/skills/pr-walkthrough/scripts/d3_canvas_runtime.py --template --data graph.json > .warp/pr-walkthrough/index.html
 ```
 ### 7. Validate the walkthrough
 Before finishing:
@@ -235,7 +235,7 @@ Before finishing:
 13. Confirm the site uses Brandalf/Warp styling.
 14. Run the reusable validator:
 ```bash
-python3 .agents/skills/pr-walkthrough/scripts/validate_d3_canvas.py --html .warp/pr-walkthrough/index.html --require-browser
+python3 ~/.agents/skills/pr-walkthrough/scripts/validate_d3_canvas.py --html .warp/pr-walkthrough/index.html --require-browser
 ```
 Do not report the walkthrough as ready if validation fails or cannot be performed in a browser-capable environment; fix the graph or report rendering as unverified.
 ### 8. Optional public publishing with Cloudflare Pages
