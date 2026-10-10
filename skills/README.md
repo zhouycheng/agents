@@ -1,4 +1,6 @@
-**skills 是一套安装在 `~/.agents/skills` 的 Agent Skills 集合，覆盖文档处理、浏览器自动化、网络检索、前端设计与视觉生成、工程协作和 Dart/Flutter 开发，供 Agent 宿主按需调用。**
+# Agent 技能
+
+自管技能统一在 `~/.agents/skills/` 维护，覆盖工作站、文档与媒体、浏览器、研究、设计及工程开发。每个技能以 `SKILL.md` 定义用途、流程和依赖，宿主按任务加载。
 
 [技能清单](#技能清单) · [安装](#安装) · [问题反馈](https://github.com/zhouycheng/agents/issues)
 
@@ -9,7 +11,7 @@
 | 技能 | 用途 |
 |---|---|
 | browser-use | 通过 CDP 直接控制浏览器，做自动化、抓取、测试和截图 |
-| chatgpt-imagegen | 用 ChatGPT 订阅生成图片与 GIF/WebP 动图，无需 API key |
+| chatgpt-imagegen | 用已授权的图像生成后端制作图片与 GIF/WebP 动图 |
 | check-impl-against-spec | 对照规格检查 Pull Request 实现，并记录重要不一致 |
 | codex-with-chatgpt | 用 ChatGPT 辅助规划和评审 Codex 编码任务 |
 | composition-patterns | React 组合模式规范，处理布尔 props 膨胀、组件库设计 |
@@ -22,8 +24,9 @@
 | grill-me | 对想法、方案或决策做逐题压力测试，输出决策简报 |
 | implement-specs | 根据已批准的产品与技术规格实现功能并保持规格同步 |
 | jianying-video-workflow | 制作视频并交付可在剪映专业版继续编辑的工程 |
+| lark-wiki | 查询、归档和维护飞书个人知识库中的资料与主题 |
 | mcp-builder | 构建 Python 或 TypeScript 的 MCP 服务器 |
-| no-negative-echo | 交付收口，防止被否方案残留进标题、commit 和 PR |
+| no-negative-echo | 按已确认的目标整理正文、标题、文件名和交付说明，保留必要边界事实 |
 | playwright-cli | 用 Playwright 自动化浏览器操作与页面测试 |
 | pptx | 创建、读取、编辑 PowerPoint 演示文稿 |
 | pr-walkthrough | 生成可交互的 Pull Request 系统、数据流和依赖关系导览 |
@@ -110,8 +113,18 @@
 git clone https://github.com/zhouycheng/agents.git ~/.agents
 ```
 
-宿主在下次会话启动时会扫描该目录并加载全部技能。
+## 宿主同步
+
+在交互式终端运行：
+
+```sh
+python3 ~/.agents/skills/scripts/sync.py
+```
+
+脚本发现已安装的 TRAE CN、Codex、Claude 和 Gemini 目录，由用户选择同步目标；为技能建立逐项软链接，保留目标中的真实目录和文件。同步后在新会话核对宿主的技能列表；可发现性取决于宿主支持的目录和配置。
+
+技能及其引用文档在本仓库维护。各技能中的历史设计、实施和版本记录提供追溯信息；执行入口以当前 `SKILL.md`、实际脚本和宿主工具为准。
 
 ## 许可
 
-各技能目录内含各自的 LICENSE.txt，以目录内文件为准。
+许可按各技能目录中的 `LICENSE`、`LICENSE.txt` 或注明的上游许可核对。

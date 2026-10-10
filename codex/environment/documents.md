@@ -1,19 +1,17 @@
 # 文档与媒体能力
 
-以下内容来自 2026 年 9 月 20 日的本机实测。正式交付仍需按项目要求检查内容和实际页面效果。
+先读取任务对应的技能、项目规则和输入材料，再选择工具。系统 CLI 的可发现状态见本机 inventory；当前会话提供的文档运行时、编辑器和连接器也可作为入口。
 
-## 当前入口
+| 任务 | 入口 | 使用前确认 |
+| --- | --- | --- |
+| PDF 文本提取、页面渲染 | `pdftotext`、`pdftoppm`；本会话 PDF 技能 | 可执行路径、输入格式及页面渲染结果 |
+| PDF、DOCX 等内容理解 | [Docling](../../skills/docling/SKILL.md) | 已有服务或 Python 环境、模型和格式支持 |
+| Word、表格和演示文稿编辑 | 本会话对应技能、文档连接器及 `load_workspace_dependencies` | 支持的操作、目标文档权限和保存方式 |
+| PPTX、POTX | [PPTX](../../skills/pptx/SKILL.md) | 生成、渲染、校验脚本及其运行时 |
+| 可编辑图表 | [drawio](../../skills/drawio-skill/SKILL.md) | 编辑器或 CLI、字体、导出工具 |
+| 视频和剪映工程 | [剪映工作流](../../skills/jianying-video-workflow/SKILL.md) | 素材、剪映版本、草稿接口和导出能力 |
+| 独立 LaTeX 文档 | Codex 内置源编辑器和编译器 | 保存 `.tex`，打开预览并调用编译诊断 |
 
-- `pdftotext`、`pdftoppm`：PDF 文本提取和页面渲染（poppler 26.09.0）。
-- `~/.agents/skills/docling/SKILL.md`：理解 PDF、DOCX 和其他支持的文档内容。
-- `~/.agents/skills/pptx/SKILL.md`：处理 PPTX 或 POTX。
-- `~/.agents/skills/drawio-skill/SKILL.md`：图表流程绘制。
-- `~/.agents/skills/jianying-video-workflow/SKILL.md`：视频制作工作流（framelean 项目自包含 ffmpeg，音频视频处理走项目内工具）。
+涉及 ffmpeg、OCR、语音转写或其他转换工具时，先查业务项目和当前运行时已有的脚本、库、服务与可执行入口。新增依赖按项目及工作站安装流程处理。
 
-## 边界
-
-- `pandoc`、`qpdf`、`soffice`、`magick`、`tesseract`、`d2`、`glow`、`officecli` 等文档转换与渲染 CLI 未安装；任务需要时先与用户确认再 `brew install`。
-- ffmpeg 按用户决策不装：framelean 项目自包含。
-- OCR、语音转写（`tesseract`、`whisper-cli`）暂不可用，需要时再装。
-
-先读取与任务匹配的 Skill 和项目规则，再选择具体入口。工具可执行不代表每种输入格式都能无损处理；涉及版式的文件需要渲染后复核。
+内容提取、格式转换、磁盘保存和实际页面效果分别核验。正式交付需检查保存后的文件、嵌入资源和渲染页面；媒体还需预览音画、字幕与时长。连接器回执和命令成功只说明相应操作已执行。

@@ -4,7 +4,7 @@
 
 | 任务 | 说明 |
 | --- | --- |
-| 开发工具、Android/Flutter 和 Codex 集成 | [development.md](development.md)（带日期的核验快照与使用边界） |
+| 开发工具、Android/Flutter 和 Codex 集成 | [development.md](development.md)（能力入口与核验流程） |
 | 文档、PDF、表格 | [documents.md](documents.md) |
 | 公开研究 | [research.md](research.md) |
 

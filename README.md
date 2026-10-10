@@ -28,8 +28,16 @@ Git 根目录只在 `~/.agents/`；所有模块都是普通目录。工作站声
 
 `AGENTS.md` 管本仓库维护，`codex/AGENTS.md` 管部署给 Codex 的全局行为。工作站技能执行前定位 `~/.agents/workstation` 并读取其规则。
 
-## 历史来源
+## 能力导航与维护
 
-本仓库沿用 skills 仓库，以普通迁移提交调整目录，再通过不压缩的 Git subtree 导入 workstation-config 完整提交历史。原有提交保留，不强推或改写历史。
+从 [Codex 能力导航](codex/environment/INDEX.md) 找到任务入口；版本和实际安装状态通过本机 inventory 及具体工具核验。设备专属补充信息写入未提交的 `codex/environment/local.md`。
 
-导入前的工作站文件历史仍使用原仓库路径；追溯时可从导入提交的第二父提交查看。GitHub 的 Wiki、Issue 和 PR 不随 Git 历史导入。旧工作站的 [Wiki](https://github.com/zhouycheng/workstation-config/wiki) 保留作历史资料；后续配置维护以本仓库为准。
+文档按 [no-negative-echo](skills/no-negative-echo/SKILL.md) 整理，以当前目标、职责和操作事实组织内容。修改技能时同时核对引用文档、调用示例和依赖入口；工作站声明变更后按对应组件验证。
+
+```sh
+# 在 ~/.agents 执行
+python3 -m unittest discover -s skills/scripts -p 'test_*.py'
+python3 -m unittest discover -s workstation/scripts -p 'test_*.py'
+```
+
+技能同步逻辑和非平凡部署逻辑修改分别运行上述对应测试。提交、推送和部署按明确授权执行。
