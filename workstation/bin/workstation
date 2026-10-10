@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+"""Deploy selected workstation configuration components and inspect local state."""
+
+import argparse
+import os
+from pathlib import Path
+import plistlib
+import subprocess
+import sys
+import tempfile
+
+
+ROOT = Path(__file__).resolve().parent.parent
+HOME = Path.home()
+MANIFEST = ROOT / 'macos/manifest'
+TEST_MODE = os.environ.get('WORKSTATION_TEST_MODE') == '1'
+
+
+def run(*args):
+    return subprocess.call(list(map(str, args)))
+
+
+def installed(path, expected):
+    return path.is_symlink() and os.readlink(path) == str(expected)
+
+
+def link(expected, path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if installed(path, expected):
+        print(f'OK {path}')
+        return
+    if path.is_symlink():
+        actual = path.resolve()
+        raw = Path(os.readlink(path))
+        legacy_roots = (HOME / 'codex-config', HOME / 'workstation-config')
+        allowed = (actual == expected.resolve() or any(
+            root == candidate or root in candidate.parents
+            for root in legacy_roots
+            for candidate in (actual, raw)
+        ))
+        if not allowed:
+            raise ValueError(f'refusing unrelated link: {path} -> {actual}')
+        path.unlink()
+    elif path.exists():
+        if path.is_file() and expected.is_file() and path.read_bytes() == expected.read_bytes():
+            path.unlink()
+        else:
+            raise ValueError(f'refusing existing unverified path: {path}')
+    path.symlink_to(expected)
+    print(f'linked {path} -> {expected}')
+
+
+def write_owned(path, content, old_source=None, owned_plist_label=None, owned_prefix=None):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_file() and not path.is_symlink() and path.read_bytes() == content:
+        print(f'OK {path}')
+        return False
+    if path.is_symlink():
+        if old_source is None or path.resolve() != old_source.resolve():
+            raise ValueError(f'refusing unrelated link: {path}')
+        path.unlink()
+    elif path.exists() and path.read_bytes() != content:
+        if owned_plist_label is not None:
+            try:
+                current = plistlib.loads(path.read_bytes())
+            except (ValueError, TypeError):
+                raise ValueError(f'refusing invalid existing plist: {path}')
+            if current.get('Label') != owned_plist_label:
+                raise ValueError(f'refusing unrelated agent: {path}')
+        elif owned_prefix is None or not path.read_bytes().startswith(owned_prefix):
+            raise ValueError(f'refusing existing different file: {path}')
+    descriptor, temporary = tempfile.mkstemp(prefix=f'.{path.name}.', dir=path.parent)
+    try:
+        with os.fdopen(descriptor, 'wb') as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    print(f'wrote {path}')
+    return True
+
+
+def androidrc():
+    return (MANIFEST / 'androidrc').read_text().replace(
+        '{{ANDROID_SDK}}', str(HOME / 'Library/Android/sdk')).encode()
+
+
+def gradle_properties():
+    prefix = os.environ.get('HOMEBREW_PREFIX') or ('/opt/homebrew' if Path('/opt/homebrew').exists() else '/usr/local')
+    return (MANIFEST / 'gradle/gradle.properties').read_text().replace(
+        '{{HOMEBREW_PREFIX}}', prefix).encode()
+
+
+def gui_plist(kind):
+    if kind == 'flutter':
+        label = 'com.zhou.workstation.flutter-mirrors'
+        arguments = ['/bin/sh', str(MANIFEST / 'launchagents/set-flutter-mirror-env.sh'), 'mirror']
+        calendar = None
+    else:
+        label = 'com.zhou.workstation.inventory'
+        arguments = ['/usr/bin/python3', str(ROOT / 'scripts/inventory.py'), 'refresh']
+        calendar = [{'Hour': hour, 'Minute': 0} for hour in (0, 6, 12, 18)]
+    data = {'Label': label, 'ProgramArguments': arguments,
+            'StandardOutPath': str(HOME / '.local/state/env' / f'{kind}.log'),
+            'StandardErrorPath': str(HOME / '.local/state/env' / f'{kind}.err.log')}
+    if kind == 'flutter':
+        data['RunAtLoad'] = True
+    else:
+        data['StartCalendarInterval'] = calendar
+    return plistlib.dumps(data), label
+
+
+def apply(component):
+    if component == 'codex':
+        link(ROOT / 'codex/AGENTS.md', HOME / '.codex/AGENTS.md')
+        link(ROOT / 'codex/environment', HOME / '.codex/environment')
+    elif component == 'shell':
+        return run('/bin/bash', MANIFEST / 'zsh/deploy.sh')
+    elif component == 'android':
+        old = ROOT / 'environment/macos/androidrc'
+        write_owned(HOME / '.androidrc', androidrc(), old)
+        link(MANIFEST / 'gradle/codex-android-mirrors.init.gradle',
+             HOME / '.gradle/init.d/10-codex-android-mirrors.init.gradle')
+        write_owned(HOME / '.gradle/gradle.properties', gradle_properties(),
+                    ROOT / 'environment/macos/manifest/gradle/gradle.properties',
+                    owned_prefix=b'# Homebrew toolchains:')
+    elif component == 'gui':
+        agent_dir = HOME / 'Library/LaunchAgents'
+        (HOME / '.local/state/env').mkdir(parents=True, exist_ok=True)
+        for kind in ('flutter', 'inventory'):
+            data, label = gui_plist(kind)
+            path = agent_dir / f'{label}.plist'
+            changed = write_owned(path, data, owned_plist_label=label)
+            if not TEST_MODE:
+                domain = f'gui/{os.getuid()}'
+                loaded = subprocess.run(['/bin/launchctl', 'print', f'{domain}/{label}'],
+                                        capture_output=True).returncode == 0
+                if loaded and changed:
+                    result = run('/bin/launchctl', 'bootout', f'{domain}/{label}')
+                    if result:
+                        return result
+                if not loaded or changed:
+                    result = run('/bin/launchctl', 'bootstrap', domain, path)
+                    if result:
+                        return result
+        if not TEST_MODE:
+            result = run('/bin/sh', MANIFEST / 'launchagents/set-flutter-mirror-env.sh', 'mirror')
+            if result:
+                return result
+        return run(sys.executable, ROOT / 'scripts/inventory.py', 'refresh')
+    return 0
+
+
+def verify():
+    expected = {
+        HOME / '.codex/AGENTS.md': ROOT / 'codex/AGENTS.md',
+        HOME / '.codex/environment': ROOT / 'codex/environment',
+        HOME / '.gradle/init.d/10-codex-android-mirrors.init.gradle': MANIFEST / 'gradle/codex-android-mirrors.init.gradle',
+    }
+    issues = []
+    for path, source in expected.items():
+        if not installed(path, source):
+            issues.append(f'{path}: wrong or missing link')
+    for path, content in ((HOME / '.androidrc', androidrc()),
+                          (HOME / '.gradle/gradle.properties', gradle_properties())):
+        if not path.is_file() or path.read_bytes() != content:
+            issues.append(f'{path}: different or missing content')
+    for kind in ('flutter', 'inventory'):
+        data, label = gui_plist(kind)
+        path = HOME / 'Library/LaunchAgents' / f'{label}.plist'
+        if not path.is_file() or path.read_bytes() != data:
+            issues.append(f'{path}: different or missing agent')
+        if not TEST_MODE and subprocess.run(
+            ['/bin/launchctl', 'print', f'gui/{os.getuid()}/{label}'],
+            capture_output=True).returncode != 0:
+            issues.append(f'{label}: LaunchAgent not loaded')
+    if run('/bin/bash', MANIFEST / 'zsh/deploy.sh', '--check'):
+        issues.append('shell check failed')
+    zshrc = HOME / '.zshrc'
+    if not zshrc.is_file() or not zshrc.read_text().endswith((MANIFEST / 'zsh/zshrc.snippet').read_text()):
+        issues.append(f'{zshrc}: managed block differs')
+    for issue in issues:
+        print(f'DRIFT {issue}')
+    if not issues:
+        print('Deployed components match workstation manifest.')
+    return 1 if issues else 0
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest='command', required=True)
+    sub.add_parser('check', help='read-only desired-versus-observed check')
+    inventory = sub.add_parser('inventory', help='local inventory')
+    inventory.add_argument('action', choices=('refresh', 'show', 'status'))
+    component = sub.add_parser('apply', help='deploy one component')
+    component.add_argument('component', choices=('codex', 'shell', 'android', 'gui'))
+    sub.add_parser('verify', help='verify deployed configuration')
+    args = parser.parse_args()
+    if args.command == 'inventory':
+        return run(sys.executable, ROOT / 'scripts/inventory.py', args.action)
+    if args.command == 'apply':
+        return apply(args.component)
+    if args.command == 'verify':
+        return verify()
+    results = (
+        run('/bin/bash', ROOT / 'scripts/probe.sh', '--brief'),
+        run(sys.executable, ROOT / 'scripts/inventory.py', 'status'),
+        run(sys.executable, MANIFEST / 'gradle/android-env.py', 'check'),
+    )
+    return max(results)
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except (OSError, ValueError) as error:
+        print(f'workstation: {error}', file=sys.stderr)
+        sys.exit(2)

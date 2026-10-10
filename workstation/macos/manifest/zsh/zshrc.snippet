@@ -1,0 +1,250 @@
+# ---- zsh 补全系统与开发环境 · 由 workstation-config 声明生成，请勿手工修改本段 ----
+# 顺序硬约束：fpath 与 zstyle → compinit → fzf-tab → autosuggestions → syntax-highlighting（必须最后）
+ZSH_ENV_BREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
+
+# Java / Gradle：JDK 21 由 Homebrew 唯一管理；终端 Gradle 与 Android Studio 共用此安装。
+export JAVA_HOME="${JAVA_HOME:-$ZSH_ENV_BREW_PREFIX/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home}"
+if [[ -d "$JAVA_HOME/bin" && ":$PATH:" != *":$JAVA_HOME/bin:"* ]]; then
+  export PATH="$JAVA_HOME/bin:$PATH"
+fi
+
+# Flutter 网络源：CFUG 镜像有 Flutter 官方文档列为可信社区镜像。
+# `flutter_source official` 同时切换当前 shell 与之后启动的 GUI 进程。
+typeset -g DEV_FLUTTER_PUB_MIRROR="${DEV_FLUTTER_PUB_MIRROR:-https://pub.flutter-io.cn}"
+typeset -g DEV_FLUTTER_STORAGE_MIRROR="${DEV_FLUTTER_STORAGE_MIRROR:-https://storage.flutter-io.cn}"
+
+flutter_source() {
+  case "${1:-status}" in
+    mirror)
+      export PUB_HOSTED_URL="$DEV_FLUTTER_PUB_MIRROR"
+      export FLUTTER_STORAGE_BASE_URL="$DEV_FLUTTER_STORAGE_MIRROR"
+      /bin/sh "$HOME/.workstation-config/macos/manifest/launchagents/set-flutter-mirror-env.sh" mirror
+      [[ "${2:-}" == "-q" ]] || print -r -- "Flutter 网络源：CFUG 镜像（$PUB_HOSTED_URL；$FLUTTER_STORAGE_BASE_URL）"
+      ;;
+    official)
+      unset PUB_HOSTED_URL FLUTTER_STORAGE_BASE_URL
+      /bin/sh "$HOME/.workstation-config/macos/manifest/launchagents/set-flutter-mirror-env.sh" official
+      print -r -- "Flutter 网络源：官方默认源；新启动的 GUI 应用也会使用官方源（已打开的应用需重启）"
+      ;;
+    status)
+      if [[ "${PUB_HOSTED_URL:-}" == "$DEV_FLUTTER_PUB_MIRROR" && "${FLUTTER_STORAGE_BASE_URL:-}" == "$DEV_FLUTTER_STORAGE_MIRROR" ]]; then
+        print -r -- "Flutter 网络源：CFUG 镜像"
+      else
+        print -r -- "Flutter 网络源：官方默认源或自定义源"
+      fi
+      if [[ "$(/bin/launchctl getenv PUB_HOSTED_URL 2>/dev/null)" == "$DEV_FLUTTER_PUB_MIRROR" \
+        && "$(/bin/launchctl getenv FLUTTER_STORAGE_BASE_URL 2>/dev/null)" == "$DEV_FLUTTER_STORAGE_MIRROR" ]]; then
+        print -r -- "新启动的 GUI 应用：CFUG 镜像"
+      else
+        print -r -- "新启动的 GUI 应用：官方默认源或自定义源"
+      fi
+      ;;
+    *)
+      print -r -- "用法：flutter_source [mirror|official|status]"
+      return 2
+      ;;
+  esac
+}
+
+android_env() {
+  python3 "$HOME/.workstation-config/macos/manifest/gradle/android-env.py" "$@"
+}
+
+# 把新项目的 Wrapper 切到已校验的 Gradle 镜像（先 --check，再 --apply）。
+gradle_mirror() {
+  /bin/sh "$HOME/.workstation-config/macos/manifest/gradle/use-mirrors.sh" "$@"
+}
+
+# 先生成 Flutter 工程但跳过 pub get，修正 Android Wrapper 后再解析 Dart 依赖。
+# 这样 Android Studio 第一次导入工程前，Wrapper 已经指向受校验的镜像。
+flutter_new() {
+  if [[ $# -lt 1 ]]; then
+    print -r -- "用法：flutter_new <新工程目录> [flutter create 选项...]"
+    print -r -- "示例：flutter_new ~/Developer/my_app --org com.example --platforms android"
+    return 2
+  fi
+
+  local project_dir="${1:A}"
+  shift
+  if [[ -e "$project_dir" || -L "$project_dir" ]]; then
+    print -u2 -r -- "目标已存在，拒绝覆盖：$project_dir"
+    return 2
+  fi
+  if [[ ! -d "${project_dir:h}" ]]; then
+    print -u2 -r -- "目标父目录不存在：${project_dir:h}"
+    return 2
+  fi
+
+  command flutter create "$@" --no-pub "$project_dir" || return $?
+  if ! gradle_mirror --apply "$project_dir"; then
+    print -u2 -r -- "Flutter 工程已生成，但 Wrapper 镜像未能配置。恢复命令：gradle_mirror --apply '$project_dir'"
+    return 1
+  fi
+  if ! (cd "$project_dir" && command flutter pub get); then
+    print -u2 -r -- "Wrapper 已配置；Pub 依赖获取未完成。进入工程运行：flutter pub get"
+    return 1
+  fi
+  print -r -- "已创建 Flutter 工程并配置 Gradle Wrapper 镜像：$project_dir"
+  print -r -- "现在可在 Android Studio 中打开该目录。"
+}
+
+# Android SDK 使用官方 SDK Manager 安装在用户 Library；命令行工具从这里统一发现它。
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+if [[ -d "$ANDROID_HOME/platform-tools" && ":$PATH:" != *":$ANDROID_HOME/platform-tools:"* ]]; then
+  export PATH="$ANDROID_HOME/platform-tools:$PATH"
+fi
+if [[ -d "$ANDROID_HOME/emulator" && ":$PATH:" != *":$ANDROID_HOME/emulator:"* ]]; then
+  export PATH="$ANDROID_HOME/emulator:$PATH"
+fi
+if [[ -d "$ANDROID_HOME/cmdline-tools/latest/bin" && ":$PATH:" != *":$ANDROID_HOME/cmdline-tools/latest/bin:"* ]]; then
+  export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+fi
+
+# 开发代理：新开的交互式 zsh 默认开启；用 `proxy off|on|status` 临时切换。
+# 这只影响从终端启动的进程；Android Studio 自身的代理由 IDE 设置管理。
+typeset -g DEV_PROXY_HOST="${DEV_PROXY_HOST:-127.0.0.1}"
+typeset -g DEV_PROXY_PORT="${DEV_PROXY_PORT:-7897}"
+typeset -g DEV_PROXY_URL="${DEV_PROXY_URL:-http://${DEV_PROXY_HOST}:${DEV_PROXY_PORT}}"
+typeset -g DEV_PROXY_BASE_NO_PROXY="${NO_PROXY:-${no_proxy:-}}"
+typeset -g DEV_PROXY_NO_PROXY_ADD="localhost,127.0.0.1,::1,.local,.aliyun.com,.huaweicloud.com,.flutter-io.cn"
+typeset -g DEV_PROXY_GRADLE_OPTS="-Djava.net.useSystemProxies=false -Dhttp.proxyHost=${DEV_PROXY_HOST} -Dhttp.proxyPort=${DEV_PROXY_PORT} -Dhttps.proxyHost=${DEV_PROXY_HOST} -Dhttps.proxyPort=${DEV_PROXY_PORT} '-Dhttp.nonProxyHosts=localhost|127.*|*.local|*.aliyun.com|*.huaweicloud.com|*.flutter-io.cn'"
+typeset -g DEV_PROXY_GRADLE_OFF_OPTS="-Djava.net.useSystemProxies=false '-Dhttp.nonProxyHosts=*'"
+
+# 每次切换都从当前参数重建，避免嵌套 shell 或外部修改重新带回旧代理。
+_dev_proxy_clean_opts() {
+  local -a parsed clean
+  local option
+  parsed=("${(@Q)${(@z)1}}")
+  for option in "${parsed[@]}"; do
+    case "$option" in
+      '') ;;
+      -Djava.net.useSystemProxies=*|-Dhttp.proxy*=*|-Dhttps.proxy*=*|-DsocksProxy*=*|-Dhttp.nonProxyHosts=*|-Dhttps.nonProxyHosts=*) ;;
+      *) clean+=("$option") ;;
+    esac
+  done
+  print -r -- "${(j: :)${(@q)clean}}"
+}
+
+_dev_proxy_set_gradle() {
+  local base="$(_dev_proxy_clean_opts "${GRADLE_OPTS:-}")"
+  export GRADLE_OPTS="${base:+$base }$1"
+}
+
+proxy_on() {
+  export http_proxy="$DEV_PROXY_URL" https_proxy="$DEV_PROXY_URL" all_proxy="$DEV_PROXY_URL"
+  export HTTP_PROXY="$DEV_PROXY_URL" HTTPS_PROXY="$DEV_PROXY_URL" ALL_PROXY="$DEV_PROXY_URL"
+  export NO_PROXY="${DEV_PROXY_BASE_NO_PROXY:+${DEV_PROXY_BASE_NO_PROXY},}${DEV_PROXY_NO_PROXY_ADD}"
+  export no_proxy="$NO_PROXY"
+  _dev_proxy_set_gradle "$DEV_PROXY_GRADLE_OPTS"
+}
+
+proxy_off() {
+  unset http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY no_proxy NO_PROXY
+  if [[ -n "$DEV_PROXY_BASE_NO_PROXY" ]]; then
+    export no_proxy="$DEV_PROXY_BASE_NO_PROXY" NO_PROXY="$DEV_PROXY_BASE_NO_PROXY"
+  fi
+  _dev_proxy_set_gradle "$DEV_PROXY_GRADLE_OFF_OPTS"
+}
+
+proxy_status() {
+  if [[ -n "${HTTPS_PROXY:-${https_proxy:-}}" ]]; then
+    print -r -- "终端 HTTPS 代理：${HTTPS_PROXY:-$https_proxy}"
+  else
+    print -r -- "终端 HTTPS 代理：未设置"
+  fi
+  local -a opts
+  local option bypass=0 hosts=0
+  opts=("${(@Q)${(@z)GRADLE_OPTS}}")
+  for option in "${opts[@]}"; do
+    [[ "$option" == '-Dhttp.nonProxyHosts=*' ]] && bypass=1
+    case "$option" in -Dhttp.proxyHost=*|-Dhttps.proxyHost=*|-DsocksProxyHost=*) hosts=1 ;; esac
+  done
+  if (( bypass )); then
+    print -r -- "Gradle JVM：HTTP(S) 全部直连（GRADLE_OPTS）"
+  elif (( hosts )); then
+    print -r -- "Gradle JVM：已设置代理；镜像按绕过规则直连"
+  else
+    print -r -- "Gradle JVM：GRADLE_OPTS 未指定代理；其他 Java/IDE 配置需另查"
+  fi
+  for option in JAVA_OPTS JAVA_TOOL_OPTIONS _JAVA_OPTIONS; do
+    if [[ "${(P)option}" == *proxy* || "${(P)option}" == *Proxy* ]]; then
+      print -r -- "注意：$option 含其他代理参数，未自动改写"
+    fi
+  done
+  print -r -- "系统代理（与终端开关独立）："
+  local system_proxy="$(/usr/sbin/scutil --proxy 2>/dev/null | /usr/bin/awk '/HTTPEnable|HTTPSEnable|SOCKSEnable|ProxyAutoConfigEnable/ {print "  " $0}')"
+  print -r -- "${system_proxy:-  未知（未读到系统代理状态）}"
+  local route_info="$(/sbin/route -n get 1.1.1.1 2>/dev/null)"
+  if [[ -z "$route_info" ]]; then
+    print -r -- "公网路由及 TUN：未知（无法读取路由）"
+  elif [[ "$route_info" == *utun* ]]; then
+    print -r -- "公网路由：经过 utun；TUN/VPN 仍可能接管流量"
+  else
+    print -r -- "公网路由：未检测到 utun；TUN 开关仍需在代理应用确认"
+  fi
+  return 0
+}
+
+proxy() {
+  case "${1:-status}" in
+    on) proxy_on ;;
+    off) proxy_off ;;
+    status) proxy_status ;;
+    *) print -r -- "用法：proxy [on|off|status]"; return 2 ;;
+  esac
+}
+
+# 按用户要求，每个新开的交互式终端默认启用代理。
+# 启动时静默设置镜像（-q）；需要查看状态时用 flutter_source status。
+flutter_source mirror -q
+# JetBrains 启动时读取登录 shell 环境不是真正的新终端。
+# IDE 构建采用直连；用户打开的普通/IDE 终端仍默认开启代理。
+if [[ -n "${INTELLIJ_ENVIRONMENT_READER:-}" ]]; then
+  proxy_off
+else
+  proxy_on
+fi
+
+# 无主资产（自建补全，非 brew 管辖）的落点
+fpath=("$HOME/.local/share/zsh/site-functions" $fpath)
+# brew 管辖的补全定义，必须在 compinit 之前
+fpath+=("$ZSH_ENV_BREW_PREFIX/share/zsh-completions")
+
+# 候选菜单：用方向键在候选里挑，而不是弹出「是否查看全部 N 行」
+zstyle ':completion:*' menu select
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*:descriptions' format '%F{cyan}%d%f'
+autoload -Uz colors && colors
+
+# compinit：-i 与 -C 都必须带，理由不同
+#
+# -i（不因 insecure directories 阻塞启动）
+#   fpath 里出现组/其他可写目录时会触发该检查，有三种结局：
+#     ① 有 tty   → 交互式询问 → 非交互调用（脚本/CI/编辑器/Agent）永久挂起
+#     ② 无 tty   → 直接放弃初始化 → 补全静默失效，而退出码仍是 0
+#     ③ 权限干净 → 正常
+#   -i 使其永不阻塞。真正的权限问题交给 probe.sh 报告，不该在 shell 启动时打断用户。
+#
+# -C（跳过 dump「新鲜度」校验，直接采用现有缓存）
+#   默认行为：拿 dump 头部的 "#files: N" 与当前 fpath 的实扫结果比对，不一致就整份重建。
+#   实测（2026-09-24）Agent 宿主的沙箱会挡住 $HOMEBREW_PREFIX/share/ 下的补全目录，
+#   使 N 由 1162 掉到 967（差额 180+15=195）→ 每个 shell 都判定缓存失效 → 每个 shell
+#   都重建 → 而 compdump 收尾那句 `mv <临时件> ~/.zcompdump` 会被宿主垫片按文件策略
+#   拒绝（stderr: "Brokered host rename source refused by file policy"）→ 临时文件
+#   永久堆在 $HOME，且每次启动白付一次 1162 个文件的全量扫描。
+#   -C 直接采用现有 dump：不再比对、不再重建，上述三重问题一并消失。
+#   代价：之后新装的补全不会被自动纳入 → **装完新补全后删一次 ~/.zcompdump 即可**。
+autoload -Uz compinit && compinit -i -C
+
+# fzf-tab：Tab 直接弹出 fzf 模糊选择器（必须在 compinit 之后）
+source "$ZSH_ENV_BREW_PREFIX/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh"
+zstyle ':fzf-tab:*' use-fzf-default-opts yes
+
+# zsh-autosuggestions：行内灰色虚影（ghost text），→ 接受整条，Ctrl+→ 接受一个词
+export ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
+export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+source "$ZSH_ENV_BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+
+# zsh-syntax-highlighting：必须最后 source，否则高亮会被其他插件覆盖
+source "$ZSH_ENV_BREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"

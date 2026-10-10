@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "verified_on": "2026-09-25",
+  "additional_official_checksums": {
+    "gradle-9.3.1-bin.zip": "b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06",
+    "gradle-9.6.0-all.zip": "87a2216cc1f9122192d4e0fe905ffdf1b4c72cff797e9f733b174e157cadd396"
+  },
+  "tools": {
+    "flutter": "3.47.5",
+    "studio": "AI-261.26222.65.2614.16379836",
+    "android_cli": "1.0.16406183",
+    "android_templates_sha256": "dc54351e71a42728014559282fb28fb904af4ee1bc6649676b271ee599c7c7bf",
+    "wrapper_sha256": "16caeaf66d57a0d1d2087fef6a97efa62de8da69afa5b908f40db35afc4342da"
+  },
+  "distributions": [
+    {
+      "url": "https://services.gradle.org/distributions/gradle-9.1.0-bin.zip",
+      "mirror": "https://mirrors.huaweicloud.com/gradle/gradle-9.1.0-bin.zip",
+      "sha256": "a17ddd85a26b6a7f5ddb71ff8b05fc5104c0202c6e64782429790c933686c806",
+      "checksum_source": "https://services.gradle.org/distributions/gradle-9.1.0-bin.zip.sha256",
+      "consumers": [
+        "Android CLI empty-activity"
+      ]
+    },
+    {
+      "url": "https://services.gradle.org/distributions/gradle-9.3.1-all.zip",
+      "mirror": "https://mirrors.huaweicloud.com/gradle/gradle-9.3.1-all.zip",
+      "sha256": "17f277867f6914d61b1aa02efab1ba7bb439ad652ca485cd8ca6842fccec6e43",
+      "checksum_source": "https://services.gradle.org/distributions/gradle-9.3.1-all.zip.sha256",
+      "consumers": [
+        "Flutter CLI",
+        "Android Studio Flutter"
+      ]
+    },
+    {
+      "url": "https://services.gradle.org/distributions/gradle-9.6.0-bin.zip",
+      "mirror": "https://mirrors.huaweicloud.com/gradle/gradle-9.6.0-bin.zip",
+      "sha256": "bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01",
+      "checksum_source": "https://services.gradle.org/distributions/gradle-9.6.0-bin.zip.sha256",
+      "consumers": [
+        "Android Studio Java",
+        "Android Studio Kotlin"
+      ]
+    }
+  ]
+}

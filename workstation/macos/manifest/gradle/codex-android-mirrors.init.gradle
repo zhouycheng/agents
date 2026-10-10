@@ -1,0 +1,98 @@
+// Adds verified-first Android repositories for Android/Flutter builds only.
+// Existing project repositories remain after these mirrors as fallbacks.
+
+def mirrorRepositories = [
+    [name: 'CodexAliyunGoogle', url: 'https://maven.aliyun.com/repository/google/'],
+    [name: 'CodexAliyunGradlePlugin', url: 'https://maven.aliyun.com/repository/gradle-plugin/'],
+    [name: 'CodexAliyunCentral', url: 'https://maven.aliyun.com/repository/central/']
+]
+
+def projectMirrorRepositories = mirrorRepositories.findAll {
+    it.name != 'CodexAliyunGradlePlugin'
+}
+def mirrorNonProxyHosts = 'localhost|127.*|*.local|*.aliyun.com|*.huaweicloud.com|*.flutter-io.cn'
+
+def isAndroidOrFlutterBuild = { settings ->
+    def candidates = [
+        'local.properties',
+        'settings.gradle',
+        'settings.gradle.kts',
+        'build.gradle',
+        'build.gradle.kts',
+        'app/build.gradle',
+        'app/build.gradle.kts',
+        'gradle/libs.versions.toml'
+    ]
+    candidates.any { relativePath ->
+        def file = new File(settings.settingsDir, relativePath)
+        if (!file.isFile()) {
+            return false
+        }
+        def text = file.getText('UTF-8')
+        text.contains('flutter.sdk') ||
+            text =~ /com\.android\.(application|library|test|dynamic-feature)/ ||
+            text =~ /libs\.plugins\.android\.(application|library|test|dynamicFeature)/ ||
+            text =~ /id\s*=\s*["']com\.android\.(application|library|test|dynamic-feature)["']/ ||
+            text.contains('com.android.tools.build:gradle')
+    }
+}
+
+def addMavenRepository = { repositories, spec ->
+    if (repositories.findByName(spec.name) == null) {
+        repositories.maven { repository ->
+            repository.name = spec.name
+            repository.url = java.net.URI.create(spec.url)
+        }
+    }
+}
+
+gradle.beforeSettings { settings ->
+    if (!isAndroidOrFlutterBuild(settings)) {
+        return
+    }
+
+    ['http.nonProxyHosts', 'https.nonProxyHosts'].each { propertyName ->
+        def hosts = (System.getProperty(propertyName, '').tokenize('|') + mirrorNonProxyHosts.tokenize('|')).unique()
+        System.setProperty(propertyName, hosts.join('|'))
+    }
+
+    mirrorRepositories.each {
+        addMavenRepository(settings.pluginManagement.repositories, it)
+    }
+
+    try {
+        projectMirrorRepositories.each {
+            addMavenRepository(settings.dependencyResolutionManagement.repositories, it)
+        }
+    } catch (MissingMethodException ignored) {
+        // Older Gradle releases without centralized repository management.
+    }
+}
+
+gradle.projectsLoaded { currentGradle ->
+    if (!isAndroidOrFlutterBuild(currentGradle.settings)) {
+        return
+    }
+
+    def failOnProjectRepositories = false
+    try {
+        failOnProjectRepositories = currentGradle.settings.dependencyResolutionManagement
+            .repositoriesMode.get().toString().contains('FAIL_ON_PROJECT_REPOS')
+    } catch (MissingMethodException ignored) {
+        // Older Gradle releases without centralized repository management.
+    }
+
+    if (!failOnProjectRepositories) {
+        currentGradle.rootProject.allprojects.each { project ->
+            projectMirrorRepositories.each {
+                addMavenRepository(project.repositories, it)
+            }
+        }
+    }
+
+    currentGradle.rootProject.allprojects.each { project ->
+        mirrorRepositories.each {
+            addMavenRepository(project.buildscript.repositories, it)
+        }
+    }
+}

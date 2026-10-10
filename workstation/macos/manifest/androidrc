@@ -1,0 +1,2 @@
+--sdk={{ANDROID_SDK}}
+--no-metrics

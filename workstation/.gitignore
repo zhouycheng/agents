@@ -1,0 +1,21 @@
+# Local machine details and secrets
+environment/local.md
+codex/environment/local.md
+.env
+.env.*
+*.token
+*.secret
+*.pem
+*.key
+credentials/
+cookies/
+sessions/
+cache/
+.firecrawl/
+
+# macOS/editor noise
+.DS_Store
+__pycache__/
+*.pyc
+.idea/
+.vscode/
