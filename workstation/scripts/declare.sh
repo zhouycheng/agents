@@ -29,8 +29,8 @@ ok()   { printf '%s\n' "${GREEN}✓${NC} $*"; }
 warn() { printf '%s\n' "${YELLOW}!${NC} $*"; }
 err()  { printf '%s\n' "${RED}✗${NC} $*" >&2; }
 
-TMP="$(mktemp -d "${TMPDIR:-/tmp}/env-declare.XXXXXX")"
-trap 'case "$TMP" in */env-declare.*) /bin/rm -rf "$TMP" ;; esac' EXIT
+TMP="$(mktemp -d "$MANIFEST_DIR/.env-declare.XXXXXX")" || exit 1
+trap 'case "$TMP" in */.env-declare.*) /bin/rm -rf "$TMP" ;; esac' EXIT
 
 list_sections() { sed -n 's/^# ==== \(.*\) ====$/\1/p' "$BREWFILE" 2>/dev/null; }
 
@@ -70,8 +70,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --help|-h) usage; exit 0 ;;
     --list-sections) list_sections; exit 0 ;;
-    --remove) ACTION="remove"; shift; PKG="${1:-}"; shift ;;
-    --section) ACTION="${ACTION:-add}"; SECTION="${2:-}"; shift 2 ;;
+    --remove) [ $# -ge 2 ] || { err "--remove 缺少包名"; exit 2; }; ACTION="remove"; PKG="$2"; shift 2 ;;
+    --section) [ $# -ge 2 ] || { err "--section 缺少分类"; exit 2; }; ACTION="${ACTION:-add}"; SECTION="$2"; shift 2 ;;
     --new-section) NEW_SECTION=true; shift ;;
     --cask) FORCE_CASK=true; shift ;;
     --npm) FORCE_NPM=true; shift ;;
@@ -82,6 +82,20 @@ done
 
 [ -f "$BREWFILE" ] || { err "清单不存在: $BREWFILE"; exit 1; }
 [ -n "$PKG" ] || { err "缺少包名"; usage; exit 2; }
+[[ "$PKG" =~ ^[@a-zA-Z0-9][a-zA-Z0-9@_+./-]*$ ]] || { err "包名包含无效字符"; exit 2; }
+case "$SECTION" in *$'\n'*|*$'\r'*) err "分类须为单行文本"; exit 2 ;; esac
+[ ! -L "$BREWFILE" ] || { err "Brewfile 为软链接，请先确认归属"; exit 2; }
+
+TARGET="$BREWFILE"
+cp -p "$TARGET" "$TMP/original" && cp -p "$TARGET" "$TMP/base" || exit 1
+BREWFILE="$TMP/base"
+
+commit_candidate() {
+  if [ -L "$TARGET" ] || ! cmp -s "$TARGET" "$TMP/original"; then
+    err "Brewfile 在操作期间发生变化，保留当前文件"; return 1
+  fi
+  cat "$TMP/new" > "$BREWFILE" && mv -f "$BREWFILE" "$TARGET"
+}
 
 # 保证文件以换行结尾，避免插入错位
 if [ -s "$BREWFILE" ] && [ -n "$(tail -c 1 "$BREWFILE")" ]; then
@@ -127,7 +141,7 @@ if [ "$ACTION" = "remove" ]; then
     err "移除后语法校验未通过，已放弃写入（原文件未动）"
     exit 1
   fi
-  cp "$TMP/new" "$BREWFILE"
+  commit_candidate || exit 1
   ok "已从清单移除声明: $PKG${declared_type:+ ($declared_type)}"
   info ""
   info "${YELLOW}注意：本脚本只改声明，不卸载。${NC}是否真的卸载 $PKG 需在对账协商中单独确认。"
@@ -165,7 +179,6 @@ if grep -qF "# ==== $SECTION ====" "$BREWFILE"; then
   :
 elif [ "$NEW_SECTION" = "true" ]; then
   printf '\n# ==== %s ====\n' "$SECTION" >> "$BREWFILE"
-  ok "已新建分类: $SECTION"
 else
   err "分类不存在: $SECTION"
   info ""
@@ -199,7 +212,7 @@ if ! validate "$TMP/new"; then
   exit 1
 fi
 
-cp "$TMP/new" "$BREWFILE"
+commit_candidate || exit 1
 ok "已声明: ${LINE}   （分类: ${SECTION}）"
 info ""
 repo="$(git -C "$MANIFEST_DIR" rev-parse --show-toplevel 2>/dev/null || echo "$MANIFEST_DIR")"
