@@ -52,7 +52,7 @@ class SyncTests(unittest.TestCase):
             self.assertEqual(sync.discover_skills(root), [])
             self.assertEqual(sync.discover_targets(home=root)[0], [])
 
-    def test_creates_and_replaces_links_but_ignores_entities(self) -> None:
+    def test_creates_links_and_preserves_existing_entries(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "skill"
@@ -66,7 +66,7 @@ class SyncTests(unittest.TestCase):
             self.assertEqual(summary.created, 1)
 
             sync.sync_skill(source, target, summary)
-            self.assertEqual(summary.replaced, 1)
+            self.assertEqual(summary.unchanged, 1)
 
             entity = target / "entity-source"
             entity.mkdir()
@@ -83,7 +83,7 @@ class SyncTests(unittest.TestCase):
             sync.sync_skill(source, target, summary)
             self.assertEqual(len(summary.ignored), 3)
 
-    def test_replaces_broken_link(self) -> None:
+    def test_preserves_unrelated_broken_link(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "skill"
@@ -95,7 +95,25 @@ class SyncTests(unittest.TestCase):
             summary = sync.SyncSummary()
             sync.sync_skill(source, target, summary)
             self.assertTrue(destination.is_symlink())
-            self.assertEqual(summary.replaced, 1)
+            self.assertEqual(destination.readlink(), root / "missing")
+            self.assertEqual(summary.ignored, [destination])
+
+    def test_preserves_existing_links_when_creation_is_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "skill"
+            source.mkdir()
+            target = root / "target"
+            target.mkdir()
+            destination = target / "skill"
+            for original in (source, root / "other"):
+                destination.symlink_to(original, target_is_directory=True)
+                summary = sync.SyncSummary()
+                with mock.patch.object(sync.os, "symlink", side_effect=OSError("not permitted")) as create:
+                    sync.sync_skill(source, target, summary)
+                create.assert_not_called()
+                self.assertEqual(destination.readlink(), original)
+                destination.unlink()
 
     def test_reports_link_creation_failure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

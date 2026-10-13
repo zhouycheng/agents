@@ -32,7 +32,7 @@ class AgentTarget:
 @dataclass
 class SyncSummary:
     created: int = 0
-    replaced: int = 0
+    unchanged: int = 0
     ignored: list[Path] = field(default_factory=list)
     failures: list[tuple[Path, str]] = field(default_factory=list)
 
@@ -94,17 +94,15 @@ def _ensure_skills_directory(path: Path) -> None:
 
 
 def sync_skill(source: Path, target_skills: Path, summary: SyncSummary) -> None:
-    """Create or replace one destination link, preserving real entries."""
+    """Create missing links and preserve every existing destination."""
 
     destination = target_skills / source.name
     try:
         if os.path.lexists(destination):
-            if not destination.is_symlink():
+            if destination.is_symlink() and _same_directory(destination, source):
+                summary.unchanged += 1
+            else:
                 summary.ignored.append(destination)
-                return
-            destination.unlink()
-            os.symlink(str(source.resolve()), str(destination), target_is_directory=True)
-            summary.replaced += 1
             return
 
         os.symlink(str(source.resolve()), str(destination), target_is_directory=True)
@@ -213,7 +211,7 @@ def select_targets(targets: Sequence[AgentTarget], output: TextIO = sys.stdout) 
 def _print_summary(summary: SyncSummary, targets: Sequence[AgentTarget], output: TextIO) -> None:
     output.write("\nSync complete.\n")
     output.write(f"  Created: {summary.created}\n")
-    output.write(f"  Replaced: {summary.replaced}\n")
+    output.write(f"  Unchanged: {summary.unchanged}\n")
     output.write(f"  Ignored: {len(summary.ignored)}\n")
     if summary.ignored:
         for path in summary.ignored:

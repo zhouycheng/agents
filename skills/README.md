@@ -121,7 +121,7 @@ git clone https://github.com/zhouycheng/agents.git ~/.agents
 python3 ~/.agents/skills/scripts/sync.py
 ```
 
-脚本发现已安装的 TRAE CN、Codex、Claude 和 Gemini 目录，由用户选择同步目标；为技能建立逐项软链接，保留目标中的真实目录和文件。同步后在新会话核对宿主的技能列表；可发现性取决于宿主支持的目录和配置。
+脚本发现已安装的 TRAE CN、Codex、Claude 和 Gemini 目录，由用户选择同步目标；为缺失技能建立逐项软链接，正确链接保持不动，已有真实目录、文件及其他链接保留并列入忽略清单。同步后在新会话核对宿主的技能列表；可发现性取决于宿主支持的目录和配置。
 
 技能及其引用文档在本仓库维护。各技能中的历史设计、实施和版本记录提供追溯信息；执行入口以当前 `SKILL.md`、实际脚本和宿主工具为准。
 
