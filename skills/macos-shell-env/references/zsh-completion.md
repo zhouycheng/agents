@@ -65,7 +65,7 @@ ZLE widgets 需要真实交互环境。Widget 数量会随插件版本变化；�
 
 ## 缓存与权限
 
-受管初始化使用 `compinit -i -C`。`-i` 忽略不安全目录以维持启动；`-C` 复用现有 dump、跳过缓存新鲜度检查。安装新补全后，需在可读到完整补全目录的用户终端重建缓存。重建前确认没有并发写入，再移走主 `.zcompdump` 并启动新 shell。
+受管初始化使用 `compinit -i -D`。每次启动执行权限审计，`-i` 忽略不安全目录；`-D` 在内存中初始化补全，不读取旧 dump 或写入新缓存。新补全会在下次初始化时重新发现，代价是每个交互式 shell 都需要扫描补全目录。`probe.sh` 和 inventory 的 Shell 分区独立报告权限异常。
 
 `compdump` 先写入 `.zcompdump.<host>.<pid>`，再改名为主缓存。2026-09-24 的 WorkBuddy 宿主曾限制补全目录读取并拒绝临时文件改名，报告 `Brokered host rename source refused by file policy`；这是特定宿主的记录。当前故障需检查实际 PATH、权限、缓存及 stderr，遵守宿主策略。
 

@@ -22,10 +22,11 @@ MAX_AGE_SECONDS = 12 * 60 * 60
 
 def config_digest():
     digest = hashlib.sha256()
-    for path in sorted(MANIFEST.rglob('*')):
+    sources = list(MANIFEST.rglob('*')) + list((ROOT / 'scripts').glob('*')) + [ROOT / 'bin/workstation']
+    for path in sorted(sources):
         if not path.is_file() or '__pycache__' in path.parts or path.suffix == '.pyc':
             continue
-        digest.update(str(path.relative_to(MANIFEST)).encode())
+        digest.update(str(path.relative_to(ROOT)).encode())
         digest.update(path.read_bytes())
     return digest.hexdigest()
 
@@ -70,7 +71,8 @@ def command_section(packages):
     applications = {}
     for name, path in catalog['applications'].items():
         applications[name] = {'present': Path(path).is_dir(), 'path': path}
-    return {'status': 'ok', 'commands': commands, 'applications': applications,
+    complete = all(item['present'] for item in list(commands.values()) + list(applications.values()))
+    return {'status': 'ok' if complete else 'missing', 'commands': commands, 'applications': applications,
             'missing_commands': [name for name, item in commands.items() if not item['present']],
             'missing_applications': [name for name, item in applications.items() if not item['present']]}
 
@@ -191,15 +193,20 @@ def main():
     snapshot = load_snapshot()
     if args.command == 'show':
         print(json.dumps(snapshot, ensure_ascii=False, indent=2))
+        return 0
     else:
         print(f'{freshness(snapshot)}\t{snapshot["generated_at"]}\t{SNAPSHOT}')
         for name, section in snapshot.get('sections', {}).items():
             print(f'{name}\t{section.get("status", "unknown")}')
+            if name == 'shell':
+                for path in section.get('insecure_directories', []):
+                    print(f'  insecure: {path}')
             if name == 'capabilities':
                 for group in ('missing_commands', 'missing_applications'):
                     if section.get(group):
                         print(f'  {group}: {", ".join(section[group])}')
-    return 0
+    return 0 if freshness(snapshot) == 'fresh' and all(
+        item.get('status') == 'ok' for item in snapshot.get('sections', {}).values()) else 1
 
 
 if __name__ == '__main__':

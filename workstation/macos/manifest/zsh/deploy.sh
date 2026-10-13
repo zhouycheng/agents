@@ -7,13 +7,13 @@
 #   deploy.sh --help
 #
 # 写入范围（仅这两处）:
-#   ~/.zshrc                                  仅从标记行起到文件末尾的块
+#   ~/.zshrc                                  仅起止标记之间的受管块
 #   ~/.local/share/zsh/site-functions/        无主资产的落点
 # ~/.zshrc 回滚点只保留一个：已有唯一备份原样保留；没有时才创建；多个时拒绝写入。
 #
 # 边界:
 #   - 本脚本**不安装任何 brew 包**。装包属于对账协商流程，由 Agent 在用户逐项确认后执行
-#   - 不 rm。任何移除走 ~/.Trash
+#   - 保留归属不明的已有文件和链接
 #   - 写 ~/.zshrc 前先 /bin/zsh -n 校验，不过则不落盘
 set -uo pipefail
 
@@ -24,7 +24,6 @@ SNIPPET="$MANIFEST/zsh/zshrc.snippet"
 ZSHRC="${ZSHRC_OVERRIDE:-$HOME/.zshrc}"
 SITE_FUNCS="$HOME/.local/share/zsh/site-functions"
 STATE_DIR="${ENV_STATE_DIR:-$HOME/.local/state/env}"
-MARKER='# ---- zsh 补全系统'
 
 RED=$'\033[31m'; GREEN=$'\033[32m'; YELLOW=$'\033[33m'; NC=$'\033[0m'
 info() { printf '%s\n' "$*"; }
@@ -32,7 +31,7 @@ ok()   { printf '%s\n' "${GREEN}✓${NC} $*"; }
 warn() { printf '%s\n' "${YELLOW}!${NC} $*"; }
 err()  { printf '%s\n' "${RED}✗${NC} $*" >&2; }
 
-TMP="$(mktemp -d "${TMPDIR:-/tmp}/env-deploy.XXXXXX")"
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/env-deploy.XXXXXX")" || exit 1
 trap 'case "$TMP" in */env-deploy.*) /bin/rm -rf "$TMP" ;; esac' EXIT
 
 find_zsh_backup() {
@@ -55,8 +54,6 @@ find_zsh_backup() {
   fi
 }
 
-current_block() { [ -f "$ZSHRC" ] && awk -v m="$MARKER" 'index($0, m) == 1 { f = 1 } f { print }' "$ZSHRC"; }
-
 case "${1:-deploy}" in
   --help|-h|help)
     awk 'NR > 1 && /^set -uo pipefail/ { exit } NR > 1 { sub(/^# ?/, ""); print }' "$0"
@@ -68,39 +65,37 @@ esac
 
 [ -f "$SNIPPET" ] || { err "缺失配置片段: $SNIPPET"; exit 1; }
 
-# 守卫：snippet 首行必须自带标记行。否则 current_block() 永远匹配不到，
-# 后续会走「追加」分支，把同一段配置重复写进 ~/.zshrc（真实踩过：84 行双块）。
-if ! grep -qF "$MARKER" "$SNIPPET"; then
-  err "zshrc.snippet 缺少标记行 '$MARKER'，拒绝执行（否则将对齐失败并追加重复块）"
-  exit 1
+newf="$TMP/zshrc.new"
+python3 "$REPO_DIR/scripts/shell_config.py" render "$ZSHRC" "$SNIPPET" "$newf" || exit 2
+if ! /bin/zsh -n "$newf" 2>"$TMP/zshrc.err"; then
+  err "生成的新配置语法检查未通过，已放弃写入："
+  sed 's/^/    /' "$TMP/zshrc.err" >&2
+  exit 2
 fi
+
+# 在写入任何配置前检查所有资产，冲突时整次部署保持原状。
+if [ -L "$SITE_FUNCS" ]; then
+  err "资产目录为软链接，请先确认归属: $SITE_FUNCS"; exit 2
+fi
+for f in "$ASSETS_DIR"/*; do
+  [ -f "$f" ] || continue
+  t="$SITE_FUNCS/$(basename "$f")"
+  if [ -L "$t" ] || { [ -e "$t" ] && ! cmp -s "$f" "$t"; }; then
+    err "已有资产归属或内容不同，保留原状: $t"; exit 2
+  fi
+done
 
 changes=0
 
 # ---------- 1. 对齐 ~/.zshrc ----------
 info "${GREEN}▸${NC} shell 配置块"
-cur="$(current_block)"
-want="$(cat "$SNIPPET")"
-if [ -z "$cur" ]; then
-  warn "~/.zshrc 中无配置块（将追加）"; changes=$((changes + 1))
-elif [ "$cur" = "$want" ]; then
+if cmp -s "$ZSHRC" "$newf"; then
   ok "已与 zshrc.snippet 一致，跳过"
 else
   warn "与 zshrc.snippet 不一致（将对齐）"; changes=$((changes + 1))
 fi
 
 if [ "$changes" -gt 0 ] && [ "$CHECK" != "true" ]; then
-  # 截断到标记行之前；命令替换顺带剥掉尾部空行
-  prev="$(awk -v m="$MARKER" 'index($0, m) == 1 { exit } { print }' "$ZSHRC" 2>/dev/null)"
-  newf="$TMP/zshrc.new"
-  if [ -n "$prev" ]; then printf '%s\n\n' "$prev" > "$newf"; else : > "$newf"; fi
-  cat "$SNIPPET" >> "$newf"
-
-  if ! /bin/zsh -n "$newf" 2>"$TMP/zshrc.err"; then
-    err "生成的新配置语法检查未通过，已放弃写入："
-    sed 's/^/    /' "$TMP/zshrc.err" >&2
-    exit 1
-  fi
   if [ -f "$ZSHRC" ]; then
     find_zsh_backup || exit 1
     if [ "$BACKUP_EXISTS" = "true" ]; then
@@ -112,12 +107,14 @@ if [ "$changes" -gt 0 ] && [ "$CHECK" != "true" ]; then
       info "  已创建唯一回滚点: ${BACKUP_FILE/#$HOME/~}"
     fi
   fi
-  mv "$newf" "$ZSHRC" || {
-    err "写入 $ZSHRC 失败"
-    if [ -f "$BACKUP_FILE" ]; then cp "$BACKUP_FILE" "$ZSHRC"; fi
-    exit 1
-  }
-  ok "已对齐 ~/.zshrc（标记块: '$MARKER' 起至文件末尾）"
+  # 同目录原子替换，保留已有配置文件的权限。
+  staged="$(mktemp "${ZSHRC}.XXXXXX")" || exit 1
+  if { [ ! -f "$ZSHRC" ] || cp -p "$ZSHRC" "$staged"; } && cat "$newf" > "$staged" && mv -f "$staged" "$ZSHRC"; then
+    ok "已对齐 ~/.zshrc 受管块"
+  else
+    /bin/rm -f "$staged"
+    err "写入 $ZSHRC 失败"; exit 1
+  fi
 fi
 
 # ---------- 2. 落位无主资产 ----------
@@ -139,8 +136,8 @@ else
       continue
     fi
     mkdir -p "$SITE_FUNCS" || { err "无法创建落点目录: $SITE_FUNCS"; exit 1; }
-    cp "$f" "$t" || { err "落位失败: $b"; exit 1; }
-    chmod 0644 "$t"
+    # 独占创建，防止预检后出现的新文件或软链接被覆盖。
+    (set -o noclobber; cat "$f" > "$t") || { err "落位失败: $b"; exit 1; }
     ok "已落位: $b"
   done
 fi
@@ -152,6 +149,7 @@ if [ "$CHECK" = "true" ]; then
     ok "无差异。"
   else
     warn "$changes 处差异待处理。执行 $0 以落位。"
+    exit 1
   fi
 else
   ok "完成。新开终端（或 exec zsh）后生效。"

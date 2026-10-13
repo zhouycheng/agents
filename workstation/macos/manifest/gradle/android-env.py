@@ -11,6 +11,8 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT.parents[2] / 'scripts'))
+from shell_config import matches
 HOME = Path.home()
 BREW_PREFIX = Path(os.environ.get('HOMEBREW_PREFIX') or ('/opt/homebrew' if Path('/opt/homebrew').exists() else '/usr/local'))
 FLUTTER = BREW_PREFIX / 'share/flutter'
@@ -76,7 +78,7 @@ def configuration(home, prepare):
     snippet = (ROOT.parent / 'zsh/zshrc.snippet').read_text()
     zshrc_path = HOME / '.zshrc'
     zshrc = zshrc_path.read_text() if zshrc_path.is_file() else ''
-    if not zshrc.endswith(snippet):
+    if not matches(zshrc, snippet):
         issues.append('zsh deployment differs; run manifest/zsh/deploy.sh')
     for key, expected in {'PUB_HOSTED_URL': 'https://pub.flutter-io.cn',
                           'FLUTTER_STORAGE_BASE_URL': 'https://storage.flutter-io.cn'}.items():

@@ -22,7 +22,6 @@ SNIPPET="$MANIFEST/zsh/zshrc.snippet"
 ZSHRC="${ZSHRC_OVERRIDE:-$HOME/.zshrc}"
 STATE_DIR="${ENV_STATE_DIR:-$HOME/.local/state/env}"
 SITE_FUNCS="$HOME/.local/share/zsh/site-functions"
-MARKER='# ---- zsh 补全系统'
 
 PY="$(command -v python3 || echo /usr/bin/python3)"
 BRIEF=false
@@ -306,7 +305,9 @@ if [ -d "$ASSETS_DIR" ]; then
     n_asset=$((n_asset + 1))
     b="$(basename "$f")"
     t="$SITE_FUNCS/$b"
-    if [ ! -e "$t" ]; then
+    if [ -L "$SITE_FUNCS" ] || [ -L "$t" ]; then
+      printf '    · %-34s %s\n' "$b" "软链接归属待确认" >> "$REPORT"
+    elif [ ! -e "$t" ]; then
       printf '    · %-34s %s\n' "$b" "未落位" >> "$REPORT"
     elif cmp -s "$f" "$t"; then
       n_asset_ok=$((n_asset_ok + 1))
@@ -320,31 +321,20 @@ else
 fi
 printf '    落点: %s\n' "${SITE_FUNCS/#$HOME/~}" >> "$REPORT"
 
-# shell 启动健壮性：fpath 中存在组/其他可写目录会让 compinit 阻塞或静默放弃
-printf '  %s\n' "【shell 启动健壮性】" >> "$REPORT"
-if command -v zsh >/dev/null 2>&1; then
-  insecure="$(/bin/zsh -c "fpath=('$BREW_PREFIX/share/zsh-completions' \$fpath); autoload -Uz compaudit; compaudit" 2>/dev/null </dev/null)"
-  if [ -n "$insecure" ]; then
-    printf '    %s\n' "⚠️ compinit 不安全目录（会阻塞非交互调用或使补全静默失效）:" >> "$REPORT"
-    printf '%s\n' "$insecure" | sed 's/^/        /' >> "$REPORT"
-    printf '    修复（须你本人执行，本脚本不代跑 chmod）: chmod go-w %s/share\n' "$BREW_PREFIX" >> "$REPORT"
-    printf '    说明: 配置已用 compinit -i 兜底，因此不会阻塞；但补全可能被整目录丢弃。\n' >> "$REPORT"
-  else
-    printf '    %s\n' "无。compinit 权限检查通过。" >> "$REPORT"
-  fi
+# 审计独立运行，避免读取交互配置产生 GUI 环境副作用。
+printf '  %s\n' "【补全目录权限】" >> "$REPORT"
+"$PY" "$REPO_DIR/scripts/shell_config.py" audit > "$TMP/audit.out" 2> "$TMP/audit.err"
+audit_result=$?
+if [ "$audit_result" -eq 0 ]; then
+  printf '    %s\n' "补全权限检查通过。" >> "$REPORT"
+elif [ -s "$TMP/audit.out" ]; then
+  printf '    %s\n' "不安全补全目录，需核对权限：" >> "$REPORT"
+  sed 's/^/        /' "$TMP/audit.out" >> "$REPORT"
+else
+  printf '    %s\n' "权限探测失败，状态未知。" >> "$REPORT"
+  cat "$TMP/audit.err" >> "$REPORT"
 fi
-# 缓存卫生：zsh 重建补全缓存时会先写 .zcompdump.<host>.<pid> 再改名；若改名失败，
-# 临时文件就留在 $HOME。
-# 源码定位（zsh 5.9，/usr/share/zsh/5.9/functions/compdump）：
-#   L21  _d_file=${_comp_dumpfile}.$HOST.$$      ← 临时文件名
-#   L36  exec {_d_fd}>$_d_file                   ← 创建并写满（残留件都是完整尺寸）
-#   L138 mv -f $_d_file ${_d_file%.$HOST.$$}     ← 改名成正主（断点就在这句）
-# 触发链：Agent 沙箱挡住 $HOMEBREW_PREFIX/share/ 下的补全目录 → fpath 实扫数
-#   1162→967 → compinit L486 判定 dump 失效 → 每个 shell 都重建 → L138 的 mv 命中
-#   PATH 前置的 brokered-bin 垫片被文件策略拒绝 → 临时件原地留下。
-# 已根治：zshrc.snippet 改为 `compinit -i -C`（-C 令 _i_check 为空，直接 source 现有
-#   dump，不比对不重建）。故本分区现应长期为 0；若又出现，说明该修复被绕过。
-# 它们是可再生的缓存、不是配置，因此只报告不代删（本脚本只读契约）。
+# 新配置在内存中初始化补全；已有缓存仅作观察。
 printf '  %s\n' "【缓存卫生】" >> "$REPORT"
 n_zd=0
 for f in "$HOME"/.zcompdump.*; do
@@ -352,30 +342,16 @@ for f in "$HOME"/.zcompdump.*; do
   n_zd=$((n_zd + 1))
 done
 if [ "$n_zd" -eq 0 ]; then
-  printf '    %s\n' "无残留（仅主 .zcompdump）。" >> "$REPORT"
+  printf '    %s\n' "未发现 .zcompdump.* 文件。" >> "$REPORT"
 else
-  printf '    %s\n' "⚠️ 残留 ${n_zd} 个 PID 后缀补全缓存（可再生，可安全清理）:" >> "$REPORT"
-  printf '    %s\n' '    清理: /bin/rm -f "$HOME"/.zcompdump.*   （用绝对路径，避免 Agent 宿主垫片）' >> "$REPORT"
+  printf '    %s\n' "发现 ${n_zd} 个 .zcompdump.* 文件，清理前需逐项确认归属与写入状态。" >> "$REPORT"
 fi
 
 # --- 6. shell 配置块 ---
 head2 6 "shell 配置块" >> "$REPORT"
-if [ ! -f "$SNIPPET" ]; then
-  printf '    %s\n' "无 zsh/zshrc.snippet，跳过。" >> "$REPORT"
-elif [ ! -f "$ZSHRC" ]; then
-  printf '    %s\n' "~/.zshrc 不存在。" >> "$REPORT"
-else
-  cur="$(awk -v m="$MARKER" 'index($0, m) == 1 { f = 1 } f { print }' "$ZSHRC")"
-  want="$(cat "$SNIPPET")"
-  if [ -z "$cur" ]; then
-    printf '    %s\n' "~/.zshrc 中无配置块（标记: ${MARKER}）" >> "$REPORT"
-  elif [ "$cur" = "$want" ]; then
-    printf '    %s\n' "与 zshrc.snippet 完全一致" >> "$REPORT"
-  else
-    printf '    %s\n' "与 zshrc.snippet 不一致" >> "$REPORT"
-  fi
-  printf '    %s\n' "标记: $MARKER  |  块约定位置: 文件末尾" >> "$REPORT"
-fi
+/bin/bash "$MANIFEST/zsh/deploy.sh" --check > "$TMP/shell-check.out" 2>&1
+shell_result=$?
+cat "$TMP/shell-check.out" >> "$REPORT"
 
 # --- 7. 汇总 ---
 head2 7 "汇总" >> "$REPORT"
@@ -389,7 +365,7 @@ printf '    · 仅在用户逐项确认后才执行；涉及 sudo/chmod 的步�
 hr >> "$REPORT"
 
 if [ "$JSON" = "true" ]; then
-  "$PY" - "$TMP" "$NPM_AVAILABLE" "$SNIPPET" "$ZSHRC" <<'PY'
+  "$PY" - "$TMP" "$NPM_AVAILABLE" "$shell_result" "$audit_result" <<'PY'
 import json, pathlib, sys
 root = pathlib.Path(sys.argv[1])
 def lines(name):
@@ -404,16 +380,16 @@ npm = []
 for line in lines('obs_npm_meta'):
     name, version = line.split('\t', 1)
     npm.append({'name': name, 'version': version})
-snippet = pathlib.Path(sys.argv[3])
-zshrc = pathlib.Path(sys.argv[4])
-shell_status = 'unknown'
-if snippet.is_file():
-    marker = '# ---- zsh 补全系统'
-    current = zshrc.read_text() if zshrc.is_file() else ''
-    managed = current[current.find(marker):] if marker in current else ''
-    shell_status = 'ok' if managed.rstrip('\n') == snippet.read_text().rstrip('\n') else 'drift'
+shell_check, audit_check = int(sys.argv[3]), int(sys.argv[4])
+insecure = lines('audit.out')
+permissions = 'ok' if audit_check == 0 else 'insecure' if insecure else 'unknown'
+shell_status = 'unknown' if shell_check > 1 or permissions == 'unknown' else 'drift' if shell_check or insecure else 'ok'
+missing = any(lines(name) for name in ('missing_f', 'missing_c', 'missing_npm'))
+extra = any(lines(name) for name in ('extra_f', 'extra_c', 'extra_npm'))
+package_status = 'partial' if sys.argv[2] != 'true' else 'missing' if missing else 'drift' if extra else 'ok'
 print(json.dumps({
-    'status': 'ok' if sys.argv[2] == 'true' else 'partial',
+    'status': package_status,
+    'observation_status': 'ok' if sys.argv[2] == 'true' else 'partial',
     'declared': declared,
     'installed': {'formulae': formulae, 'casks': lines('obs_casks'), 'npm': npm},
     'missing': {'formulae': lines('missing_f'), 'casks': lines('missing_c'),
@@ -421,7 +397,9 @@ print(json.dumps({
     'extra': {'formulae': lines('extra_f'), 'casks': lines('extra_c'),
               'npm': lines('extra_npm') if sys.argv[2] == 'true' else None},
     'npm_status': 'ok' if sys.argv[2] == 'true' else 'unknown',
-    'shell': {'status': shell_status},
+    'shell': {'status': shell_status, 'deployment_exit_code': shell_check,
+              'permissions_status': permissions, 'insecure_directories': insecure,
+              'details': lines('shell-check.out'), 'audit_error': lines('audit.err') if permissions == 'unknown' else []},
 }, ensure_ascii=False, separators=(',', ':')))
 PY
   exit $?
@@ -433,3 +411,5 @@ if [ "$SAVE_REPORT" = "true" ]; then
 fi
 
 cat "$REPORT"
+
+[ "$n_missing" -eq 0 ] && [ "$n_extra" -eq 0 ] && [ "$NPM_AVAILABLE" = "true" ] && [ "$shell_result" -eq 0 ] && [ "$audit_result" -eq 0 ]

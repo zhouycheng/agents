@@ -50,6 +50,10 @@ bin/workstation verify
 
 `check` 用于只读检查；`apply` 负责落位指定组件；`verify` 用于完成后的统一验证。
 
+`check`、`verify` 和 `inventory status` 在检测到差异、缺失或未知状态时返回非零退出码；`inventory status` 也将过期快照视为待处理。`probe.sh --json` 的退出码表示探测是否成功，JSON 的 `status` 表示是否符合声明，`observation_status` 表示包探测完整性。
+
+Shell 检查覆盖受管块、补全资产和目录权限。受管块的起止标记之外可保留用户配置；部署遇到归属不明的文件或链接时保留现场并报错。
+
 ## 工作机制
 
 | 阶段 | 作用 |
@@ -79,6 +83,8 @@ android_env check → prepare → verify
 ```
 
 inventory 超过 12 小时，或配置摘要发生变化时，会标记为 `stale`。需要依赖某项具体能力时，再对对应组件做一次定向核验。
+
+分区状态使用 `ok`、`drift`、`missing`、`partial`、`unknown` 区分符合声明、存在差异、缺少能力、部分探测成功与探测失败。配置摘要同时覆盖 manifest、工作站入口和探测脚本，脚本修复后需要刷新快照。
 
 日常维护可以保持下面这条路径：
 
