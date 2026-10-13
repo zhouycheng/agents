@@ -1,0 +1,25 @@
+name: Validate agent workspace
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: macos-14
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Test skill synchronization
+        run: python3 -m unittest discover -s skills/scripts -p 'test_*.py'
+      - name: Test workstation safeguards
+        run: python3 -m unittest discover -s workstation/scripts -p 'test_*.py'
+      - name: Check shell syntax
+        run: |
+          git ls-files -z 'workstation/*.sh' 'workstation/**/*.sh' | xargs -0 -n 1 /bin/bash -n
+          /bin/zsh -n workstation/macos/manifest/zsh/zshrc.snippet

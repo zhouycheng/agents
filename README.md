@@ -41,3 +41,5 @@ python3 -m unittest discover -s workstation/scripts -p 'test_*.py'
 ```
 
 技能同步逻辑和非平凡部署逻辑修改分别运行上述对应测试。提交、推送和部署按明确授权执行。
+
+GitHub Actions 在 macOS 上执行这两组隔离测试及 Shell 语法检查；测试使用临时目录，不部署运行器的个人环境。工作站测试覆盖受管块边界、资产冲突、权限检查、包声明事务和状态报告。
