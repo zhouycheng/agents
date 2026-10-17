@@ -1,6 +1,6 @@
 # Agent 技能
 
-自管技能统一在 `~/.agents/skills/` 维护，覆盖工作站、文档与媒体、浏览器、研究、设计及工程开发。每个技能以 `SKILL.md` 定义用途、流程和依赖，宿主按任务加载。
+自管技能统一在 `~/.agents/skills/` 维护，覆盖工作站、文档与媒体、浏览器、研究、设计及工程开发。本清单列出当前仓库全部 63 个 `SKILL.md` 入口及其用途，含嵌套的 Claude Code 变体。
 
 [技能清单](#技能清单) · [安装](#安装) · [问题反馈](https://github.com/zhouycheng/agents/issues)
 
@@ -12,44 +12,33 @@
 |---|---|
 | browser-use | 通过 CDP 直接控制浏览器，做自动化、抓取、测试和截图 |
 | chatgpt-imagegen | 用已授权的图像生成后端制作图片与 GIF/WebP 动图 |
-| check-impl-against-spec | 对照规格检查 Pull Request 实现，并记录重要不一致 |
 | codex-with-chatgpt | 用 ChatGPT 辅助规划和评审 Codex 编码任务 |
 | composition-patterns | React 组合模式规范，处理布尔 props 膨胀、组件库设计 |
-| council | 调度多个模型或 Agent 从不同角度调查问题并综合建议 |
 | cross-critique | 让多个独立方案相互评议，深化有争议的技术决策 |
 | docling | 把 PDF、DOCX、PPTX、XLSX 等文档转换成 Markdown |
 | drawio-skill | 绘制流程图、架构图、UML、网络拓扑等各类图并导出 |
 | firecrawl | 通过 Firecrawl CLI 检索网页、提取内容、下载站点 |
-| full-output-enforcement | 强制完整输出，杜绝占位符和省略式截断 |
 | grill-me | 对想法、方案或决策做逐题压力测试，输出决策简报 |
+| grill-me/claude-code | 对明确提出的方案进行逐题压力测试，核实事实并形成决策简报；只访谈，不执行。 |
 | implement-specs | 根据已批准的产品与技术规格实现功能并保持规格同步 |
-| jianying-video-workflow | 制作视频并交付可在剪映专业版继续编辑的工程 |
 | lark-wiki | 查询、归档和维护飞书个人知识库中的资料与主题 |
 | mcp-builder | 构建 Python 或 TypeScript 的 MCP 服务器 |
 | no-negative-echo | 按已确认的目标整理正文、标题、文件名和交付说明，保留必要边界事实 |
 | playwright-cli | 用 Playwright 自动化浏览器操作与页面测试 |
 | pptx | 创建、读取、编辑 PowerPoint 演示文稿 |
-| pr-walkthrough | 生成可交互的 Pull Request 系统、数据流和依赖关系导览 |
+| project-manager | 项目总管：明确计划、分派岗位会话并跟进交付 |
 | prompt-optimizer-skill | 把草稿提示词改写成可验收的标准结构提示词 |
 | workstation-lookup | 从任何项目快速读取本机环境清单、判断时效并定向核验；配置维护由统一工作站技能负责 |
+| work-delivery-log | 共享工作成果记录、历史补录与到期目录归档，供 Codex 与 WorkBuddy 共用 |
 | workstation-audit | 只读核对工作站配置、能力与本机清单 |
 | workstation-provision | 按明确的配置或安装决定部署工作站组件 |
 | android-flutter-env | 核验和准备 Android / Flutter、Gradle Wrapper 环境 |
 | macos-shell-env | 部署和排查工作站的受管 zsh 环境 |
-| readout | 将调查结果整理为可长期阅读和分享的 HTML 文档 |
 | react-best-practices | React/Next.js 性能优化规范（Vercel 工程实践） |
-| rename-all-threads | 批量整理 Codex 会话标题，确认后统一重命名 |
-| rename-current-thread | 把当前 Codex 会话标题规范为统一格式 |
 | research | 委派多 Agent 调查复杂问题，并返回精炼结论与证据 |
-| resolve-merge-conflicts | 提取并解决 Git 合并、变基或拣选提交中的冲突 |
-| respond-to-pr-comments-in-blocklist | 逐条处理 Pull Request 评论，并在确认后回复和解决线程 |
-| review-pr | 审查 Pull Request 差异并生成结构化 review.json |
 | skill-doctor | 根据真实对话评估 Agent Skills，并提出具体改进建议 |
-| spec-driven-implementation | 以产品规格和技术规格驱动重大功能的实现流程 |
-| tabbit | 在任务隔离的 Playwright 工作区中控制 Tabbit 浏览器 |
+| tailscale-docker-deploy | 判断或完成 Docker 容器化，并通过 Tailscale SSH 部署到 Linux Compose 服务器 |
 | update-skill | 创建、更新和完善本仓库中的 SKILL.md |
-| validate-changes-match-specs | 验证分支或 Pull Request 是否符合产品、技术与安全规格 |
-| write-pr-description | 编写 Pull Request 描述、审查重点和推荐阅读顺序 |
 
 ### 前端设计
 
@@ -57,19 +46,14 @@
 |---|---|
 | brandkit | 生成品牌手册图板、logo 系统与视觉识别方案 |
 | design-taste-frontend | 解读需求推断设计方向，产出反模板化的前端界面 |
-| design-taste-frontend-v1 | design-taste-frontend 的 v1 兼容版本，保留原有行为 |
 | frontend-design | 前端视觉设计指引，避免模板化审美 |
 | gpt-taste | 高端 UX/UI 与 GSAP 滚动动效工程，强化版式与布局变化 |
-| high-end-visual-design | 按高端设计机构的字体、间距、阴影与动效标准做网页 |
 | image-to-code | 先生成并分析设计图，再按图实现高还原度网页 |
 | image-to-psb | 把图片、插画或 PDF 页还原为分层可编辑的 Photoshop PSB |
 | imagegen-frontend-mobile | 生成 iOS/Android App 界面概念图与多屏流程 |
 | imagegen-frontend-web | 为落地页每个版块单独生成设计参考图 |
-| industrial-brutalist-ui | 工业粗野主义界面，瑞士排版融合军事终端美学 |
 | ip-as-logo | 提出 IP 吉祥物方向并生成极简候选图 |
 | minimalist-ui | 极简编辑风界面，暖色单色系与扁平 bento 网格 |
-| redesign-existing-projects | 审计既有网站并按高端标准重设计，不破坏功能 |
-| stitch-design-taste | 为 Google Stitch 生成 DESIGN.md 语义设计系统 |
 
 ### Dart
 

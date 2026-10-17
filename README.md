@@ -4,7 +4,7 @@
 
 | 目录 | 职责 |
 | --- | --- |
-| [skills/](skills/README.md) | 所有自管技能，包括工作站审计、部署和环境维护技能 |
+| [skills/](skills/README.md) | 63 个自管技能入口及完整用途清单，包括工作站、工程和设计能力 |
 | [workstation/](workstation/README.md) | macOS 期望配置、能力探测、组件部署和验证 |
 | [codex/](codex/) | Codex 全局规则与能力导航，部署到 `~/.codex` |
 
