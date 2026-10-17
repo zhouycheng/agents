@@ -1,0 +1,6 @@
+interface:
+  display_name: "Project Manager"
+  short_description: "Plan projects and coordinate persistent Agency Agents roles"
+  default_prompt: "Use $project-manager to coordinate this project, clarify my requirements, and propose an execution plan."
+policy:
+  allow_implicit_invocation: false
