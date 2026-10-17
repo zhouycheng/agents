@@ -1,6 +1,6 @@
 # Agent 技能
 
-自管技能统一在 `~/.agents/skills/` 维护，覆盖工作站、文档与媒体、浏览器、研究、设计及工程开发。本清单列出当前仓库全部 63 个 `SKILL.md` 入口及其用途，含嵌套的 Claude Code 变体。
+自管技能统一在 `~/.agents/skills/` 维护，覆盖工作站、文档与媒体、浏览器、研究、设计及工程开发。本清单列出当前仓库全部 64 个 `SKILL.md` 入口及其用途，含嵌套的 Claude Code 变体。
 
 [技能清单](#技能清单) · [安装](#安装) · [问题反馈](https://github.com/zhouycheng/agents/issues)
 
@@ -18,6 +18,7 @@
 | docling | 把 PDF、DOCX、PPTX、XLSX 等文档转换成 Markdown |
 | drawio-skill | 绘制流程图、架构图、UML、网络拓扑等各类图并导出 |
 | firecrawl | 通过 Firecrawl CLI 检索网页、提取内容、下载站点 |
+| github-actions-deploy | 添加或提速 GitHub Actions 容器镜像构建、发布与服务器部署流程 |
 | grill-me | 对想法、方案或决策做逐题压力测试，输出决策简报 |
 | grill-me/claude-code | 对明确提出的方案进行逐题压力测试，核实事实并形成决策简报；只访谈，不执行。 |
 | implement-specs | 根据已批准的产品与技术规格实现功能并保持规格同步 |

@@ -1,0 +1,6 @@
+interface:
+  display_name: "GitHub Actions Deploy"
+  short_description: "Add or optimize container deployment workflows"
+  default_prompt: "Use $github-actions-deploy to add or improve this repository’s GitHub Actions container deployment workflow."
+policy:
+  allow_implicit_invocation: true
