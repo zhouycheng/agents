@@ -1,0 +1,3 @@
+interface:
+  display_name: "Tailscale Docker Deploy"
+  short_description: "Deploy Docker apps over Tailscale SSH with safe checks"
