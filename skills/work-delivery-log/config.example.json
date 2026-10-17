@@ -1,0 +1,9 @@
+{
+  "archive_root": "~/Documents/工作归档",
+  "archive_year": 2026,
+  "project_id": "填写已核对的滴答清单ID",
+  "project_name": "工作成果",
+  "time_zone": "Asia/Shanghai",
+  "retention_days": 7,
+  "history_root": "~/Documents/工作归档/历史归档"
+}
