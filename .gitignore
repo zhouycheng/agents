@@ -11,6 +11,7 @@ credentials/
 cookies/
 sessions/
 cache/
+/.workbuddy/
 .firecrawl/
 
 # macOS/editor noise
